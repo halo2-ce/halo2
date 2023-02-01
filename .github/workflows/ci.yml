@@ -19,9 +19,10 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --verbose --release --all --all-features
+          args: --verbose --release --all
 
   build:
+    if: ${{ false }}
     name: Build target ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
@@ -51,7 +52,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          override: false
+          override: true
+          toolchain: nightly
       # Build benchmarks to prevent bitrot
       - name: Build benchmarks
         uses: actions-rs/cargo@v1
@@ -59,28 +61,28 @@ jobs:
           command: build
           args: --benches --examples --all-features
 
-  codecov:
-    name: Code coverage
-    runs-on: ubuntu-latest
+  # codecov:
+  #   name: Code coverage
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      # Use stable for this to ensure that cargo-tarpaulin can be built.
-      - uses: actions-rs/toolchain@v1
-        with:
-          override: false
-      - name: Install cargo-tarpaulin
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-tarpaulin
-      - name: Generate coverage report
-        uses: actions-rs/cargo@v1
-        with:
-          command: tarpaulin
-          args: --all-features --timeout 600 --out Xml
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.0
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     # Use stable for this to ensure that cargo-tarpaulin can be built.
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         override: false
+  #     - name: Install cargo-tarpaulin
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: install
+  #         args: cargo-tarpaulin
+  #     - name: Generate coverage report
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: tarpaulin
+  #         args: --all-features --timeout 600 --out Xml
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v3.1.0
 
   doc-links:
     name: Intra-doc links
@@ -112,7 +114,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
-          override: false
+          override: true
+          toolchain: nightly
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:

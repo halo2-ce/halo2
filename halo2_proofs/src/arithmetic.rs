@@ -8,7 +8,7 @@ use group::{
     Curve, Group as _,
 };
 
-pub use halo2curves::{CurveAffine, CurveExt, FieldExt, Group};
+pub use curves::{CurveAffine, CurveExt, FieldExt, Group};
 
 fn multiexp_serial<C: CurveAffine>(coeffs: &[C::Scalar], bases: &[C], acc: &mut C::Curve) {
     let coeffs: Vec<_> = coeffs.iter().map(|a| a.to_repr()).collect();
@@ -485,7 +485,7 @@ pub(crate) fn powers<F: FieldExt>(base: F) -> impl Iterator<Item = F> {
 use rand_core::OsRng;
 
 #[cfg(test)]
-use crate::halo2curves::pasta::Fp;
+use crate::curves::pasta::Fp;
 
 #[test]
 fn test_lagrange_interpolate() {

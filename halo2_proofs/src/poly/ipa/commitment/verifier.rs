@@ -1,20 +1,10 @@
-use std::io::Read;
-
-use group::{
-    ff::{BatchInvert, Field},
-    Curve,
-};
-
 use super::ParamsIPA;
-use crate::poly::ipa::commitment::{IPACommitmentScheme, ParamsVerifierIPA};
+use crate::{arithmetic::CurveAffine, poly::ipa::strategy::GuardIPA};
 use crate::{
-    arithmetic::{best_multiexp, CurveAffine},
-    poly::ipa::strategy::GuardIPA,
-};
-use crate::{
-    poly::{commitment::MSM, ipa::msm::MSMIPA, strategy::Guard, Error},
+    poly::{commitment::MSM, ipa::msm::MSMIPA, Error},
     transcript::{EncodedChallenge, TranscriptRead},
 };
+use group::ff::{BatchInvert, Field};
 
 /// Checks to see if the proof represented within `transcript` is valid, and a
 /// point `x` that the polynomial commitment `P` opens purportedly to the value

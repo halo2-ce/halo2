@@ -1,13 +1,5 @@
-use std::{io, marker::PhantomData};
-
-use group::ff::Field;
-use halo2curves::CurveAffine;
-use rand_core::{OsRng, RngCore};
-use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
-
 use super::{verify_proof, VerificationStrategy};
 use crate::{
-    multicore,
     plonk::{Error, VerifyingKey},
     poly::{
         commitment::{Params, MSM},
@@ -20,6 +12,10 @@ use crate::{
     },
     transcript::{Blake2bRead, TranscriptReadBuffer},
 };
+use curves::CurveAffine;
+use group::ff::Field;
+use rand_core::OsRng;
+use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
 
 /// A proof verification strategy that returns the proof's MSM.
 ///
@@ -80,12 +76,14 @@ impl<C: CurveAffine> BatchVerifier<C> {
 
     /// Finalizes the batch and checks its validity.
     ///
-    /// Returns `false` if *some* proof was invalid. If the caller needs to identify
-    /// specific failing proofs, it must re-process the proofs separately.
+    /// Returns `false` if *some* proof was invalid. If the caller needs to
+    /// identify specific failing proofs, it must re-process the proofs
+    /// separately.
     ///
-    /// This uses [`OsRng`] internally instead of taking an `R: RngCore` argument, because
-    /// the internal parallelization requires access to a RNG that is guaranteed to not
-    /// clone its internal state when shared between threads.
+    /// This uses [`OsRng`] internally instead of taking an `R: RngCore`
+    /// argument, because the internal parallelization requires access to a
+    /// RNG that is guaranteed to not clone its internal state when shared
+    /// between threads.
     pub fn finalize(self, params: &ParamsVerifierIPA<C>, vk: &VerifyingKey<C>) -> bool {
         fn accumulate_msm<'params, C: CurveAffine>(
             mut acc: MSMIPA<'params, C>,

@@ -11,15 +11,14 @@ use super::{
         Selector,
     },
     evaluation::Evaluator,
-    permutation, Assigned, Challenge, Error, Expression, LagrangeCoeff, Polynomial, ProvingKey,
-    VerifyingKey,
+    permutation, Assigned, Error, LagrangeCoeff, Polynomial, ProvingKey, VerifyingKey,
 };
 use crate::{
     arithmetic::{parallelize, CurveAffine},
     circuit::Value,
     poly::{
         batch_invert_assigned,
-        commitment::{Blind, Params, MSM},
+        commitment::{Blind, Params},
         EvaluationDomain,
     },
 };
@@ -172,10 +171,6 @@ impl<F: Field> Assignment<F> for Assembly<F> {
         }
 
         Ok(())
-    }
-
-    fn get_challenge(&self, _: Challenge) -> Value<F> {
-        Value::unknown()
     }
 
     fn push_namespace<NR, N>(&mut self, _: N)

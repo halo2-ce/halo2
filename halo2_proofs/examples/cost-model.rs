@@ -5,11 +5,11 @@ use std::{
     time::{Duration, Instant},
 };
 
+use curves::pasta::pallas;
 use ff::Field;
 use group::{Curve, Group};
 use gumdrop::Options;
 use halo2_proofs::arithmetic::best_multiexp;
-use halo2curves::pasta::pallas;
 
 struct Estimator {
     /// Scalars for estimating multiexp performance.

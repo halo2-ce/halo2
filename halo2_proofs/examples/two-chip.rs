@@ -77,9 +77,9 @@ trait MulInstructions<F: FieldExt>: Chip<F> {
 // for the other configs.
 #[derive(Clone, Debug)]
 struct FieldConfig {
-    /// For this chip, we will use two advice columns to implement our instructions.
-    /// These are also the columns through which we communicate with other parts of
-    /// the circuit.
+    /// For this chip, we will use two advice columns to implement our
+    /// instructions. These are also the columns through which we
+    /// communicate with other parts of the circuit.
     advice: [Column<Advice>; 2],
 
     /// Public inputs
@@ -444,9 +444,9 @@ impl<F: FieldExt> FieldInstructions<F> for FieldChip<F> {
 // ANCHOR: circuit
 /// The full circuit implementation.
 ///
-/// In this struct we store the private input variables. We use `Value<F>` because
-/// they won't have any value during key generation. During proving, if any of these
-/// were `Value::unknown()` we would get an error.
+/// In this struct we store the private input variables. We use `Value<F>`
+/// because they won't have any value during key generation. During proving, if
+/// any of these were `Value::unknown()` we would get an error.
 #[derive(Default)]
 struct MyCircuit<F: FieldExt> {
     a: Value<F>,
@@ -455,7 +455,8 @@ struct MyCircuit<F: FieldExt> {
 }
 
 impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
-    // Since we are using a single chip for everything, we can just reuse its config.
+    // Since we are using a single chip for everything, we can just reuse its
+    // config.
     type Config = FieldConfig;
     type FloorPlanner = SimpleFloorPlanner;
 
@@ -496,9 +497,9 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
 
 #[allow(clippy::many_single_char_names)]
 fn main() {
+    use curves::pasta::Fp;
     use group::ff::Field;
     use halo2_proofs::dev::MockProver;
-    use halo2curves::pasta::Fp;
     use rand_core::OsRng;
 
     // ANCHOR: test-circuit

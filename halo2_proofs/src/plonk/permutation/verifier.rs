@@ -10,27 +10,31 @@ use crate::{
     transcript::{EncodedChallenge, TranscriptRead},
 };
 
+#[derive(Debug)]
 pub struct Committed<C: CurveAffine> {
     permutation_product_commitments: Vec<C>,
 }
 
+#[derive(Debug)]
 pub struct EvaluatedSet<C: CurveAffine> {
-    permutation_product_commitment: C,
-    permutation_product_eval: C::Scalar,
-    permutation_product_next_eval: C::Scalar,
-    permutation_product_last_eval: Option<C::Scalar>,
+    pub permutation_product_commitment: C,
+    pub permutation_product_eval: C::Scalar,
+    pub permutation_product_next_eval: C::Scalar,
+    pub permutation_product_last_eval: Option<C::Scalar>,
 }
 
+#[derive(Debug)]
 pub struct CommonEvaluated<C: CurveAffine> {
-    permutation_evals: Vec<C::Scalar>,
+    pub permutation_evals: Vec<C::Scalar>,
 }
 
+#[derive(Debug)]
 pub struct Evaluated<C: CurveAffine> {
-    sets: Vec<EvaluatedSet<C>>,
+    pub sets: Vec<EvaluatedSet<C>>,
 }
 
 impl Argument {
-    pub(crate) fn read_product_commitments<
+    pub fn read_product_commitments<
         C: CurveAffine,
         E: EncodedChallenge<C>,
         T: TranscriptRead<C, E>,
@@ -54,7 +58,7 @@ impl Argument {
 }
 
 impl<C: CurveAffine> VerifyingKey<C> {
-    pub(in crate::plonk) fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
+    pub fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
         &self,
         transcript: &mut T,
     ) -> Result<CommonEvaluated<C>, Error> {
@@ -69,7 +73,7 @@ impl<C: CurveAffine> VerifyingKey<C> {
 }
 
 impl<C: CurveAffine> Committed<C> {
-    pub(crate) fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
+    pub fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
         self,
         transcript: &mut T,
     ) -> Result<Evaluated<C>, Error> {
@@ -160,7 +164,7 @@ impl<C: CurveAffine> Evaluated<C> {
                         for (eval, permutation_eval) in columns
                             .iter()
                             .map(|&column| match column.column_type() {
-                                Any::Advice(_) => {
+                                Any::Advice => {
                                     advice_evals[vk.cs.get_any_query_index(column, Rotation::cur())]
                                 }
                                 Any::Fixed => {
@@ -180,7 +184,7 @@ impl<C: CurveAffine> Evaluated<C> {
                         let mut current_delta = (*beta * &*x)
                             * &(C::Scalar::DELTA.pow_vartime(&[(chunk_index * chunk_len) as u64]));
                         for eval in columns.iter().map(|&column| match column.column_type() {
-                            Any::Advice(_) => {
+                            Any::Advice => {
                                 advice_evals[vk.cs.get_any_query_index(column, Rotation::cur())]
                             }
                             Any::Fixed => {

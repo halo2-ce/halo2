@@ -1,0 +1,14 @@
+[package]
+name = "poseidon"
+version = "0.2.0"
+authors = ["kilic <kiliconu@itu.edu.tr>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+curves = { path = "../../arithmetic/curves" }
+group = { version = "0.12" }
+subtle = { version = "2.3", default-features = false }
+
+[dev-dependencies]
+rand_core = { version = "0.6", default-features = false }

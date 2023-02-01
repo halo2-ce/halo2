@@ -8,13 +8,15 @@ use crate::plonk::{Assigned, Error};
 /// A value that might exist within a circuit.
 ///
 /// This behaves like `Option<V>` but differs in two key ways:
-/// - It does not expose the enum cases, or provide an `Option::unwrap` equivalent. This
-///   helps to ensure that unwitnessed values correctly propagate.
-/// - It provides pass-through implementations of common traits such as `Add` and `Mul`,
-///   for improved usability.
+/// - It does not expose the enum cases, or provide an `Option::unwrap`
+///   equivalent. This helps to ensure that unwitnessed values correctly
+///   propagate.
+/// - It provides pass-through implementations of common traits such as `Add`
+///   and `Mul`, for improved usability.
 #[derive(Clone, Copy, Debug)]
 pub struct Value<V> {
-    inner: Option<V>,
+    /// for adhoc usage...
+    pub inner: Option<V>,
 }
 
 impl<V> Default for Value<V> {
@@ -45,8 +47,13 @@ impl<V> Value<V> {
     /// Obtains the inner value for assigning into the circuit.
     ///
     /// Returns `Error::Synthesis` if this is [`Value::unknown()`].
-    pub(crate) fn assign(self) -> Result<V, Error> {
+    pub fn assign(self) -> Result<V, Error> {
         self.inner.ok_or(Error::Synthesis)
+    }
+
+    /// ...
+    pub fn is_none(&self) -> bool {
+        self.inner.is_none()
     }
 
     /// Converts from `&Value<V>` to `Value<&V>`.
@@ -65,8 +72,8 @@ impl<V> Value<V> {
 
     /// Enforces an assertion on the contained value, if known.
     ///
-    /// The assertion is ignored if `self` is [`Value::unknown()`]. Do not try to enforce
-    /// circuit constraints with this method!
+    /// The assertion is ignored if `self` is [`Value::unknown()`]. Do not try
+    /// to enforce circuit constraints with this method!
     ///
     /// # Panics
     ///
@@ -79,8 +86,8 @@ impl<V> Value<V> {
 
     /// Checks the contained value for an error condition, if known.
     ///
-    /// The error check is ignored if `self` is [`Value::unknown()`]. Do not try to
-    /// enforce circuit constraints with this method!
+    /// The error check is ignored if `self` is [`Value::unknown()`]. Do not try
+    /// to enforce circuit constraints with this method!
     pub fn error_if_known_and<F: FnOnce(&V) -> bool>(&self, f: F) -> Result<(), Error> {
         match self.inner.as_ref() {
             Some(value) if f(value) => Err(Error::Synthesis),
@@ -88,15 +95,16 @@ impl<V> Value<V> {
         }
     }
 
-    /// Maps a `Value<V>` to `Value<W>` by applying a function to the contained value.
+    /// Maps a `Value<V>` to `Value<W>` by applying a function to the contained
+    /// value.
     pub fn map<W, F: FnOnce(V) -> W>(self, f: F) -> Value<W> {
         Value {
             inner: self.inner.map(f),
         }
     }
 
-    /// Returns [`Value::unknown()`] if the value is [`Value::unknown()`], otherwise calls
-    /// `f` with the wrapped value and returns the result.
+    /// Returns [`Value::unknown()`] if the value is [`Value::unknown()`],
+    /// otherwise calls `f` with the wrapped value and returns the result.
     pub fn and_then<W, F: FnOnce(V) -> Value<W>>(self, f: F) -> Value<W> {
         match self.inner {
             Some(v) => f(v),
@@ -106,8 +114,9 @@ impl<V> Value<V> {
 
     /// Zips `self` with another `Value`.
     ///
-    /// If `self` is `Value::known(s)` and `other` is `Value::known(o)`, this method
-    /// returns `Value::known((s, o))`. Otherwise, [`Value::unknown()`] is returned.
+    /// If `self` is `Value::known(s)` and `other` is `Value::known(o)`, this
+    /// method returns `Value::known((s, o))`. Otherwise,
+    /// [`Value::unknown()`] is returned.
     pub fn zip<W>(self, other: Value<W>) -> Value<(V, W)> {
         Value {
             inner: self.inner.zip(other.inner),
@@ -154,7 +163,8 @@ impl<V> Value<&V> {
 }
 
 impl<V> Value<&mut V> {
-    /// Maps a `Value<&mut V>` to a `Value<V>` by copying the contents of the value.
+    /// Maps a `Value<&mut V>` to a `Value<V>` by copying the contents of the
+    /// value.
     #[must_use = "`self` will be dropped if the result is not used"]
     pub fn copied(self) -> Value<V>
     where
@@ -165,7 +175,8 @@ impl<V> Value<&mut V> {
         }
     }
 
-    /// Maps a `Value<&mut V>` to a `Value<V>` by cloning the contents of the value.
+    /// Maps a `Value<&mut V>` to a `Value<V>` by cloning the contents of the
+    /// value.
     #[must_use = "`self` will be dropped if the result is not used"]
     pub fn cloned(self) -> Value<V>
     where
@@ -197,7 +208,8 @@ where
     I: IntoIterator<Item = V>,
     I::IntoIter: ExactSizeIterator,
 {
-    /// Transposes a `Value<impl IntoIterator<Item = V>>` into a `Vec<Value<V>>`.
+    /// Transposes a `Value<impl IntoIterator<Item = V>>` into a
+    /// `Vec<Value<V>>`.
     ///
     /// [`Value::unknown()`] will be mapped to `vec![Value::unknown(); length]`.
     ///
@@ -221,10 +233,10 @@ where
 //
 
 impl<A, V: FromIterator<A>> FromIterator<Value<A>> for Value<V> {
-    /// Takes each element in the [`Iterator`]: if it is [`Value::unknown()`], no further
-    /// elements are taken, and the [`Value::unknown()`] is returned. Should no
-    /// [`Value::unknown()`] occur, a container of type `V` containing the values of each
-    /// [`Value`] is returned.
+    /// Takes each element in the [`Iterator`]: if it is [`Value::unknown()`],
+    /// no further elements are taken, and the [`Value::unknown()`] is
+    /// returned. Should no [`Value::unknown()`] occur, a container of type
+    /// `V` containing the values of each [`Value`] is returned.
     fn from_iter<I: IntoIterator<Item = Value<A>>>(iter: I) -> Self {
         Self {
             inner: iter.into_iter().map(|v| v.inner).collect(),
@@ -637,9 +649,9 @@ impl<V> Value<V> {
     ///
     /// # Examples
     ///
-    /// If you have a `Value<F: Field>`, convert it to `Value<Assigned<F>>` first:
-    /// ```
-    /// # use halo2curves::pasta::pallas::Base as F;
+    /// If you have a `Value<F: Field>`, convert it to `Value<Assigned<F>>`
+    /// first: ```
+    /// # use curves::pasta::pallas::Base as F;
     /// use halo2_proofs::{circuit::Value, plonk::Assigned};
     ///
     /// let v = Value::known(F::from(2));
@@ -687,7 +699,8 @@ impl<V> Value<V> {
 }
 
 impl<F: Field> Value<Assigned<F>> {
-    /// Evaluates this value directly, performing an unbatched inversion if necessary.
+    /// Evaluates this value directly, performing an unbatched inversion if
+    /// necessary.
     ///
     /// If the denominator is zero, the returned value is zero.
     pub fn evaluate(self) -> Value<F> {

@@ -1,10 +1,3 @@
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::fmt;
-use std::iter;
-
-use group::ff::Field;
-use halo2curves::FieldExt;
-
 use super::{
     metadata,
     util::{self, AnyQuery},
@@ -13,20 +6,24 @@ use super::{
 use crate::{
     dev::Value,
     plonk::{Any, Column, ConstraintSystem, Expression, Gate},
-    poly::Rotation,
 };
+use curves::FieldExt;
+use group::ff::Field;
+use std::collections::{BTreeMap, HashSet};
+use std::fmt;
 
 mod emitter;
 
-/// The location within the circuit at which a particular [`VerifyFailure`] occurred.
+/// The location within the circuit at which a particular [`VerifyFailure`]
+/// occurred.
 #[derive(Debug, PartialEq)]
 pub enum FailureLocation {
     /// A location inside a region.
     InRegion {
         /// The region in which the failure occurred.
         region: metadata::Region,
-        /// The offset (relative to the start of the region) at which the failure
-        /// occurred.
+        /// The offset (relative to the start of the region) at which the
+        /// failure occurred.
         offset: usize,
     },
     /// A location outside of a region.
@@ -62,7 +59,6 @@ impl FailureLocation {
                     &|query| vec![cs.fixed_queries[query.index].0.into()],
                     &|query| vec![cs.advice_queries[query.index].0.into()],
                     &|query| vec![cs.instance_queries[query.index].0.into()],
-                    &|_| vec![],
                     &|a| a,
                     &|mut a, mut b| {
                         a.append(&mut b);
@@ -80,7 +76,8 @@ impl FailureLocation {
         Self::find(regions, failure_row, failure_columns)
     }
 
-    /// Figures out whether the given row and columns overlap an assigned region.
+    /// Figures out whether the given row and columns overlap an assigned
+    /// region.
     pub(super) fn find(
         regions: &[Region],
         failure_row: usize,
@@ -117,14 +114,15 @@ pub enum VerifyFailure {
         gate: metadata::Gate,
         /// The region in which this cell should be assigned.
         region: metadata::Region,
-        /// The offset (relative to the start of the region) at which the active gate
-        /// queries this cell.
+        /// The offset (relative to the start of the region) at which the active
+        /// gate queries this cell.
         gate_offset: usize,
         /// The column in which this cell should be assigned.
         column: Column<Any>,
-        /// The offset (relative to the start of the region) at which this cell should be
-        /// assigned. This may be negative (for example, if a selector enables a gate at
-        /// offset 0, but the gate uses `Rotation::prev()`).
+        /// The offset (relative to the start of the region) at which this cell
+        /// should be assigned. This may be negative (for example, if a
+        /// selector enables a gate at offset 0, but the gate uses
+        /// `Rotation::prev()`).
         offset: isize,
     },
     /// A constraint was not satisfied for a particular row.
@@ -133,13 +131,15 @@ pub enum VerifyFailure {
         constraint: metadata::Constraint,
         /// The location at which this constraint is not satisfied.
         ///
-        /// `FailureLocation::OutsideRegion` is usually caused by a constraint that does
-        /// not contain a selector, and as a result is active on every row.
+        /// `FailureLocation::OutsideRegion` is usually caused by a constraint
+        /// that does not contain a selector, and as a result is active
+        /// on every row.
         location: FailureLocation,
         /// The values of the virtual cells used by this constraint.
         cell_values: Vec<(metadata::VirtualCell, String)>,
     },
-    /// A constraint was active on an unusable row, and is likely missing a selector.
+    /// A constraint was active on an unusable row, and is likely missing a
+    /// selector.
     ConstraintPoisoned {
         /// The polynomial constraint that is not satisfied.
         constraint: metadata::Constraint,
@@ -148,22 +148,24 @@ pub enum VerifyFailure {
     Lookup {
         /// The name of the lookup that is not satisfied.
         name: &'static str,
-        /// The index of the lookup that is not satisfied. These indices are assigned in
-        /// the order in which `ConstraintSystem::lookup` is called during
-        /// `Circuit::configure`.
+        /// The index of the lookup that is not satisfied. These indices are
+        /// assigned in the order in which `ConstraintSystem::lookup` is
+        /// called during `Circuit::configure`.
         lookup_index: usize,
         /// The location at which the lookup is not satisfied.
         ///
-        /// `FailureLocation::InRegion` is most common, and may be due to the intentional
-        /// use of a lookup (if its inputs are conditional on a complex selector), or an
-        /// unintentional lookup constraint that overlaps the region (indicating that the
+        /// `FailureLocation::InRegion` is most common, and may be due to the
+        /// intentional use of a lookup (if its inputs are conditional
+        /// on a complex selector), or an unintentional lookup
+        /// constraint that overlaps the region (indicating that the
         /// lookup's inputs should be made conditional).
         ///
         /// `FailureLocation::OutsideRegion` is uncommon, and could mean that:
-        /// - The input expressions do not correctly constrain a default value that exists
-        ///   in the table when the lookup is not being used.
-        /// - The input expressions use a column queried at a non-zero `Rotation`, and the
-        ///   lookup is active on a row adjacent to an unrelated region.
+        /// - The input expressions do not correctly constrain a default value
+        ///   that exists in the table when the lookup is not being used.
+        /// - The input expressions use a column queried at a non-zero
+        ///   `Rotation`, and the lookup is active on a row adjacent to an
+        ///   unrelated region.
         location: FailureLocation,
     },
     /// A permutation did not preserve the original value of a cell.
@@ -387,8 +389,8 @@ fn render_lookup<F: FieldExt>(
     let cs = &prover.cs;
     let lookup = &cs.lookups[lookup_index];
 
-    // Get the absolute row on which the lookup's inputs are being queried, so we can
-    // fetch the input values.
+    // Get the absolute row on which the lookup's inputs are being queried, so we
+    // can fetch the input values.
     let row = match location {
         FailureLocation::InRegion { region, offset } => {
             prover.regions[region.index].rows.unwrap().0 + offset
@@ -396,8 +398,8 @@ fn render_lookup<F: FieldExt>(
         FailureLocation::OutsideRegion { row } => *row,
     } as i32;
 
-    // Recover the fixed columns from the table expressions. We don't allow composite
-    // expressions for the table side of lookups.
+    // Recover the fixed columns from the table expressions. We don't allow
+    // composite expressions for the table side of lookups.
     let table_columns = lookup.table_expressions.iter().map(|expr| {
         expr.evaluate(
             &|_| panic!("no constants in table expressions"),
@@ -405,7 +407,6 @@ fn render_lookup<F: FieldExt>(
             &|query| format!("F{}", query.column_index),
             &|_| panic!("no advice columns in table expressions"),
             &|_| panic!("no instance columns in table expressions"),
-            &|_| panic!("no challenges in table expressions"),
             &|_| panic!("no negations in table expressions"),
             &|_, _| panic!("no sums in table expressions"),
             &|_, _| panic!("no products in table expressions"),
@@ -414,11 +415,11 @@ fn render_lookup<F: FieldExt>(
     });
 
     fn cell_value<'a, F: FieldExt, Q: Into<AnyQuery> + Copy>(
+        column_type: Any,
         load: impl Fn(Q) -> Value<F> + 'a,
     ) -> impl Fn(Q) -> BTreeMap<metadata::VirtualCell, String> + 'a {
         move |query| {
             let AnyQuery {
-                column_type,
                 column_index,
                 rotation,
                 ..
@@ -453,15 +454,18 @@ fn render_lookup<F: FieldExt>(
         let cell_values = input.evaluate(
             &|_| BTreeMap::default(),
             &|_| panic!("virtual selectors are removed during optimization"),
-            &cell_value(&util::load(n, row, &cs.fixed_queries, &prover.fixed)),
-            &cell_value(&util::load(n, row, &cs.advice_queries, &prover.advice)),
-            &cell_value(&util::load_instance(
-                n,
-                row,
-                &cs.instance_queries,
-                &prover.instance,
-            )),
-            &|_| BTreeMap::default(),
+            &cell_value(
+                Any::Fixed,
+                &util::load(n, row, &cs.fixed_queries, &prover.fixed),
+            ),
+            &cell_value(
+                Any::Advice,
+                &util::load(n, row, &cs.advice_queries, &prover.advice),
+            ),
+            &cell_value(
+                Any::Instance,
+                &util::load_instance(n, row, &cs.instance_queries, &prover.instance),
+            ),
             &|a| a,
             &|mut a, mut b| {
                 a.append(&mut b);

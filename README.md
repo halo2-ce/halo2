@@ -1,5 +1,14 @@
 # halo2 [![Crates.io](https://img.shields.io/crates/v/halo2.svg)](https://crates.io/crates/halo2) #
 
+Monorepo of halo2 community edition; build on top of the following crates:
+- ff: ff-0.12.0
+- group: group-0.12.0 
+- pasta: pasta_curves-0.4.1
+- curves: halo2curves-0.2.1
+- pairing: pairing-0.22.0
+- poseidon: poseidon-0.2.0
+- halo2_proofs: halo2_proofs-0.2.0
+
 ## [Documentation](https://docs.rs/halo2)
 
 ## Minimum Supported Rust Version

@@ -1,14 +1,8 @@
-use halo2curves::CurveAffine;
-use rand_core::RngCore;
+use super::commitment::{CommitmentScheme, Verifier};
+use crate::plonk::Error;
 
-use super::commitment::{CommitmentScheme, Verifier, MSM};
-use crate::{
-    plonk::Error,
-    transcript::{EncodedChallenge, TranscriptRead},
-};
-
-/// Guards is unfinished verification result. Implement this to construct various
-/// verification strategies such as aggregation and recursion.
+/// Guards is unfinished verification result. Implement this to construct
+/// various verification strategies such as aggregation and recursion.
 pub trait Guard<Scheme: CommitmentScheme> {
     /// Multi scalar engine which is not evaluated yet.
     type MSMAccumulator;
@@ -31,7 +25,8 @@ pub trait VerificationStrategy<'params, Scheme: CommitmentScheme, V: Verifier<'p
 
     /// Finalizes the batch and checks its validity.
     ///
-    /// Returns `false` if *some* proof was invalid. If the caller needs to identify
-    /// specific failing proofs, it must re-process the proofs separately.
+    /// Returns `false` if *some* proof was invalid. If the caller needs to
+    /// identify specific failing proofs, it must re-process the proofs
+    /// separately.
     fn finalize(self) -> bool;
 }

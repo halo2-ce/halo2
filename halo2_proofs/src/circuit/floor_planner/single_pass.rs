@@ -11,16 +11,17 @@ use crate::{
         Cell, Layouter, Region, RegionIndex, RegionStart, Table, Value,
     },
     plonk::{
-        Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, Error, Fixed, FloorPlanner,
-        Instance, Selector, TableColumn,
+        Advice, Any, Assigned, Assignment, Circuit, Column, Error, Fixed, FloorPlanner, Instance,
+        Selector, TableColumn,
     },
 };
 
 /// A simple [`FloorPlanner`] that performs minimal optimizations.
 ///
-/// This floor planner is suitable for debugging circuits. It aims to reflect the circuit
-/// "business logic" in the circuit layout as closely as possible. It uses a single-pass
-/// layouter that does not reorder regions for optimal packing.
+/// This floor planner is suitable for debugging circuits. It aims to reflect
+/// the circuit "business logic" in the circuit layout as closely as possible.
+/// It uses a single-pass layouter that does not reorder regions for optimal
+/// packing.
 #[derive(Debug)]
 pub struct SimpleFloorPlanner;
 
@@ -114,8 +115,8 @@ impl<'a, F: Field, CS: Assignment<F> + 'a> Layouter<F> for SingleChipLayouter<'a
         let constants_to_assign = region.constants;
         self.cs.exit_region();
 
-        // Assign constants. For the simple floor planner, we assign constants in order in
-        // the first `constants` column.
+        // Assign constants. For the simple floor planner, we assign constants in order
+        // in the first `constants` column.
         if self.constants.is_empty() {
             if !constants_to_assign.is_empty() {
                 return Err(Error::NotEnoughColumnsForConstants);
@@ -152,8 +153,8 @@ impl<'a, F: Field, CS: Assignment<F> + 'a> Layouter<F> for SingleChipLayouter<'a
         N: Fn() -> NR,
         NR: Into<String>,
     {
-        // Maintenance hazard: there is near-duplicate code in `v1::AssignmentPass::assign_table`.
-        // Assign table cells.
+        // Maintenance hazard: there is near-duplicate code in
+        // `v1::AssignmentPass::assign_table`. Assign table cells.
         self.cs.enter_region(name);
         let mut table = SimpleTableLayouter::new(self.cs, &self.table_columns);
         {
@@ -214,10 +215,6 @@ impl<'a, F: Field, CS: Assignment<F> + 'a> Layouter<F> for SingleChipLayouter<'a
         )
     }
 
-    fn get_challenge(&self, challenge: Challenge) -> Value<F> {
-        self.cs.get_challenge(challenge)
-    }
-
     fn get_root(&mut self) -> &mut Self::Root {
         self
     }
@@ -238,7 +235,8 @@ impl<'a, F: Field, CS: Assignment<F> + 'a> Layouter<F> for SingleChipLayouter<'a
 struct SingleChipLayouterRegion<'r, 'a, F: Field, CS: Assignment<F> + 'a> {
     layouter: &'r mut SingleChipLayouter<'a, F, CS>,
     region_index: RegionIndex,
-    /// Stores the constants to be assigned, and the cells to which they are copied.
+    /// Stores the constants to be assigned, and the cells to which they are
+    /// copied.
     constants: Vec<(Assigned<F>, Cell)>,
 }
 
@@ -376,9 +374,9 @@ impl<'r, 'a, F: Field, CS: Assignment<F> + 'a> RegionLayouter<F>
 
 /// The default value to fill a table column with.
 ///
-/// - The outer `Option` tracks whether the value in row 0 of the table column has been
-///   assigned yet. This will always be `Some` once a valid table has been completely
-///   assigned.
+/// - The outer `Option` tracks whether the value in row 0 of the table column
+///   has been assigned yet. This will always be `Some` once a valid table has
+///   been completely assigned.
 /// - The inner `Value` tracks whether the underlying `Assignment` is evaluating
 ///   witnesses or not.
 type DefaultTableValue<F> = Option<Value<Assigned<F>>>;
@@ -456,7 +454,7 @@ impl<'r, 'a, F: Field, CS: Assignment<F> + 'a> TableLayouter<F>
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::vesta;
+    use curves::pasta::vesta;
 
     use super::SimpleFloorPlanner;
     use crate::{

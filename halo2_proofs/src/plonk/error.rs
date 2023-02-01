@@ -1,4 +1,3 @@
-use std::cmp;
 use std::error;
 use std::fmt;
 use std::io;
@@ -29,13 +28,14 @@ pub enum Error {
     },
     /// Instance provided exceeds number of available rows
     InstanceTooLarge,
-    /// Circuit synthesis requires global constants, but circuit configuration did not
-    /// call [`ConstraintSystem::enable_constant`] on fixed columns with sufficient space.
+    /// Circuit synthesis requires global constants, but circuit configuration
+    /// did not call [`ConstraintSystem::enable_constant`] on fixed columns
+    /// with sufficient space.
     ///
     /// [`ConstraintSystem::enable_constant`]: crate::plonk::ConstraintSystem::enable_constant
     NotEnoughColumnsForConstants,
-    /// The instance sets up a copy constraint involving a column that has not been
-    /// included in the permutation.
+    /// The instance sets up a copy constraint involving a column that has not
+    /// been included in the permutation.
     ColumnNotInPermutation(Column<Any>),
 }
 

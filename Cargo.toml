@@ -1,6 +1,9 @@
 [workspace]
 members = [
     "halo2",
-    "halo2_gadgets",
     "halo2_proofs",
+    "arithmetic/pairing",
+    "arithmetic/curves",
+    "arithmetic/pasta_curves",
+    "primitives/poseidon"
 ]

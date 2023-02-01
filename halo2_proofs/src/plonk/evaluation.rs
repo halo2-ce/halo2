@@ -1,32 +1,13 @@
 use crate::multicore;
-use crate::plonk::lookup::prover::Committed;
-use crate::plonk::permutation::Argument;
-use crate::plonk::{lookup, permutation, AdviceQuery, Any, FixedQuery, InstanceQuery, ProvingKey};
+use crate::plonk::{lookup, permutation, Any, ProvingKey};
 use crate::poly::Basis;
 use crate::{
-    arithmetic::{eval_polynomial, parallelize, CurveAffine, FieldExt},
-    poly::{
-        commitment::Params, Coeff, EvaluationDomain, ExtendedLagrangeCoeff, LagrangeCoeff,
-        Polynomial, ProverQuery, Rotation,
-    },
-    transcript::{EncodedChallenge, TranscriptWrite},
-};
-use group::prime::PrimeCurve;
-use group::{
-    ff::{BatchInvert, Field},
-    Curve,
-};
-use std::any::TypeId;
-use std::convert::TryInto;
-use std::num::ParseIntError;
-use std::slice;
-use std::{
-    collections::BTreeMap,
-    iter,
-    ops::{Index, Mul, MulAssign},
+    arithmetic::{parallelize, CurveAffine, FieldExt},
+    poly::{Coeff, ExtendedLagrangeCoeff, Polynomial, Rotation},
 };
 
 use super::{ConstraintSystem, Expression};
+use group::ff::Field;
 
 /// Return the index in the polynomial of size `isize` after rotation `rot`.
 fn get_rotation_idx(idx: usize, rot: i32, rot_scale: i32, isize: i32) -> usize {
@@ -46,8 +27,6 @@ pub enum ValueSource {
     Advice(usize, usize),
     /// This is an instance (external) column
     Instance(usize, usize),
-    /// This is a challenge
-    Challenge(usize),
     /// beta
     Beta(),
     /// gamma
@@ -76,7 +55,6 @@ impl ValueSource {
         fixed_values: &[Polynomial<F, B>],
         advice_values: &[Polynomial<F, B>],
         instance_values: &[Polynomial<F, B>],
-        challenges: &[F],
         beta: &F,
         gamma: &F,
         theta: &F,
@@ -95,7 +73,6 @@ impl ValueSource {
             ValueSource::Instance(column_index, rotation) => {
                 instance_values[*column_index][rotations[*rotation]]
             }
-            ValueSource::Challenge(index) => challenges[*index],
             ValueSource::Beta() => *beta,
             ValueSource::Gamma() => *gamma,
             ValueSource::Theta() => *theta,
@@ -136,7 +113,6 @@ impl Calculation {
         fixed_values: &[Polynomial<F, B>],
         advice_values: &[Polynomial<F, B>],
         instance_values: &[Polynomial<F, B>],
-        challenges: &[F],
         beta: &F,
         gamma: &F,
         theta: &F,
@@ -151,7 +127,6 @@ impl Calculation {
                 fixed_values,
                 advice_values,
                 instance_values,
-                challenges,
                 beta,
                 gamma,
                 theta,
@@ -282,7 +257,6 @@ impl<C: CurveAffine> Evaluator<C> {
         pk: &ProvingKey<C>,
         advice_polys: &[&[Polynomial<C::ScalarExt, Coeff>]],
         instance_polys: &[&[Polynomial<C::ScalarExt, Coeff>]],
-        challenges: &[C::ScalarExt],
         y: C::ScalarExt,
         beta: C::ScalarExt,
         gamma: C::ScalarExt,
@@ -346,7 +320,6 @@ impl<C: CurveAffine> Evaluator<C> {
                                 fixed,
                                 advice,
                                 instance,
-                                challenges,
                                 &beta,
                                 &gamma,
                                 &theta,
@@ -417,7 +390,7 @@ impl<C: CurveAffine> Evaluator<C> {
                             for (values, permutation) in columns
                                 .iter()
                                 .map(|&column| match column.column_type() {
-                                    Any::Advice(_) => &advice[column.index()],
+                                    Any::Advice => &advice[column.index()],
                                     Any::Fixed => &fixed[column.index()],
                                     Any::Instance => &instance[column.index()],
                                 })
@@ -428,7 +401,7 @@ impl<C: CurveAffine> Evaluator<C> {
 
                             let mut right = set.permutation_product_coset[idx];
                             for values in columns.iter().map(|&column| match column.column_type() {
-                                Any::Advice(_) => &advice[column.index()],
+                                Any::Advice => &advice[column.index()],
                                 Any::Fixed => &fixed[column.index()],
                                 Any::Instance => &instance[column.index()],
                             }) {
@@ -470,7 +443,6 @@ impl<C: CurveAffine> Evaluator<C> {
                             fixed,
                             advice,
                             instance,
-                            challenges,
                             &beta,
                             &gamma,
                             &theta,
@@ -493,8 +465,8 @@ impl<C: CurveAffine> Evaluator<C> {
                                 * l_last[idx]);
                         // (1 - (l_last(X) + l_blind(X))) * (
                         //   z(\omega X) (a'(X) + \beta) (s'(X) + \gamma)
-                        //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta)
-                        //          (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
+                        //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1}
+                        //     s_0(X) + ... + s_{m-1}(X) + \gamma)
                         // ) = 0
                         *value = *value * y
                             + ((product_coset[r_next]
@@ -509,7 +481,8 @@ impl<C: CurveAffine> Evaluator<C> {
                         // Check that each value in the permuted lookup input expression is either
                         // equal to the value above it, or the value at the same index in the
                         // permuted table expression.
-                        // (1 - (l_last + l_blind)) * (a′(X) − s′(X))⋅(a′(X) − a′(\omega^{-1} X)) = 0
+                        // (1 - (l_last + l_blind)) * (a′(X) − s′(X))⋅(a′(X) − a′(\omega^{-1} X)) =
+                        // 0
                         *value = *value * y
                             + (a_minus_s
                                 * (permuted_input_coset[idx] - permuted_input_coset[r_prev])
@@ -612,9 +585,6 @@ impl<C: CurveAffine> GraphEvaluator<C> {
                     rot_idx,
                 )))
             }
-            Expression::Challenge(challenge) => self.add_calculation(Calculation::Store(
-                ValueSource::Challenge(challenge.index()),
-            )),
             Expression::Negated(a) => match **a {
                 Expression::Constant(scalar) => self.add_constant(&-scalar),
                 _ => {
@@ -703,7 +673,6 @@ impl<C: CurveAffine> GraphEvaluator<C> {
         fixed: &[Polynomial<C::ScalarExt, B>],
         advice: &[Polynomial<C::ScalarExt, B>],
         instance: &[Polynomial<C::ScalarExt, B>],
-        challenges: &[C::ScalarExt],
         beta: &C::ScalarExt,
         gamma: &C::ScalarExt,
         theta: &C::ScalarExt,
@@ -727,7 +696,6 @@ impl<C: CurveAffine> GraphEvaluator<C> {
                 fixed,
                 advice,
                 instance,
-                challenges,
                 beta,
                 gamma,
                 theta,
@@ -753,7 +721,6 @@ pub fn evaluate<F: FieldExt, B: Basis>(
     fixed: &[Polynomial<F, B>],
     advice: &[Polynomial<F, B>],
     instance: &[Polynomial<F, B>],
-    challenges: &[F],
 ) -> Vec<F> {
     let mut values = vec![F::zero(); size];
     let isize = size as i32;
@@ -775,7 +742,6 @@ pub fn evaluate<F: FieldExt, B: Basis>(
                     instance[query.column_index]
                         [get_rotation_idx(idx, query.rotation.0, rot_scale, isize)]
                 },
-                &|challenge| challenges[challenge.index()],
                 &|a| -a,
                 &|a, b| a + &b,
                 &|a, b| a * b,

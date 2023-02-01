@@ -10,16 +10,16 @@ use std::ops::Range;
 use crate::{
     circuit::{layouter::RegionColumn, Value},
     plonk::{
-        Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, ConstraintSystem, Error,
-        Fixed, FloorPlanner, Instance, Selector,
+        Advice, Any, Assigned, Assignment, Circuit, Column, ConstraintSystem, Error, Fixed,
+        FloorPlanner, Instance, Selector,
     },
 };
 
 /// Graphical renderer for circuit layouts.
 ///
-/// Cells that have been assigned to by the circuit will be shaded. If any cells are
-/// assigned to more than once (which is usually a mistake), they will be shaded darker
-/// than the surrounding cells.
+/// Cells that have been assigned to by the circuit will be shaded. If any cells
+/// are assigned to more than once (which is usually a mistake), they will be
+/// shaded darker than the surrounding cells.
 ///
 /// # Examples
 ///
@@ -120,7 +120,7 @@ impl CircuitLayout {
             column.index()
                 + match column.column_type() {
                     Any::Instance => 0,
-                    Any::Advice(_) => cs.num_instance_columns,
+                    Any::Advice => cs.num_instance_columns,
                     Any::Fixed => cs.num_instance_columns + cs.num_advice_columns,
                 }
         };
@@ -129,8 +129,9 @@ impl CircuitLayout {
         let view_height = self.view_height.unwrap_or(0..n);
         let view_bottom = view_height.end;
 
-        // Prepare the grid layout. We render a red background for advice columns, white for
-        // instance columns, and blue for fixed columns (with a darker blue for selectors).
+        // Prepare the grid layout. We render a red background for advice columns, white
+        // for instance columns, and blue for fixed columns (with a darker blue
+        // for selectors).
         let root =
             drawing_area.apply_coord_spec(Cartesian2d::<RangedCoordusize, RangedCoordusize>::new(
                 view_width,
@@ -332,8 +333,8 @@ struct Region {
     offset: Option<usize>,
     /// The number of rows that this region takes up.
     rows: usize,
-    /// The cells assigned in this region. We store this as a `Vec` so that if any cells
-    /// are double-assigned, they will be visibly darker.
+    /// The cells assigned in this region. We store this as a `Vec` so that if
+    /// any cells are double-assigned, they will be visibly darker.
     cells: Vec<(RegionColumn, usize)>,
 }
 
@@ -343,8 +344,8 @@ struct Layout {
     regions: Vec<Region>,
     current_region: Option<usize>,
     total_rows: usize,
-    /// Any cells assigned outside of a region. We store this as a `Vec` so that if any
-    /// cells are double-assigned, they will be visibly darker.
+    /// Any cells assigned outside of a region. We store this as a `Vec` so that
+    /// if any cells are double-assigned, they will be visibly darker.
     loose_cells: Vec<(RegionColumn, usize)>,
     /// Pairs of cells between which we have equality constraints.
     equality: Vec<(Column<Any>, usize, Column<Any>, usize)>,
@@ -359,8 +360,9 @@ impl Layout {
             regions: vec![],
             current_region: None,
             total_rows: 0,
-            /// Any cells assigned outside of a region. We store this as a `Vec` so that if any
-            /// cells are double-assigned, they will be visibly darker.
+            /// Any cells assigned outside of a region. We store this as a `Vec`
+            /// so that if any cells are double-assigned, they will
+            /// be visibly darker.
             loose_cells: vec![],
             /// Pairs of cells between which we have equality constraints.
             equality: vec![],
@@ -488,10 +490,6 @@ impl<F: Field> Assignment<F> for Layout {
         _: Value<Assigned<F>>,
     ) -> Result<(), Error> {
         Ok(())
-    }
-
-    fn get_challenge(&self, _: Challenge) -> Value<F> {
-        Value::unknown()
     }
 
     fn push_namespace<NR, N>(&mut self, _: N)

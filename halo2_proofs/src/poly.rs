@@ -5,8 +5,8 @@
 use crate::arithmetic::parallelize;
 use crate::plonk::Assigned;
 
+use curves::FieldExt;
 use group::ff::{BatchInvert, Field};
-use halo2curves::FieldExt;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::{Add, Deref, DerefMut, Index, IndexMut, Mul, RangeFrom, RangeFull, Sub};
@@ -271,8 +271,8 @@ impl<'a, F: Field, B: Basis> Sub<F> for &'a Polynomial<F, B> {
 }
 
 /// Describes the relative rotation of a vector. Negative numbers represent
-/// reverse (leftmost) rotations and positive numbers represent forward (rightmost)
-/// rotations. Zero represents no rotation.
+/// reverse (leftmost) rotations and positive numbers represent forward
+/// (rightmost) rotations. Zero represents no rotation.
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Rotation(pub i32);
 

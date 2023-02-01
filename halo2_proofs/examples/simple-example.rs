@@ -50,9 +50,9 @@ struct FieldChip<F: FieldExt> {
 /// during configuration, and then stored inside the chip.
 #[derive(Clone, Debug)]
 struct FieldConfig {
-    /// For this chip, we will use two advice columns to implement our instructions.
-    /// These are also the columns through which we communicate with other parts of
-    /// the circuit.
+    /// For this chip, we will use two advice columns to implement our
+    /// instructions. These are also the columns through which we
+    /// communicate with other parts of the circuit.
     advice: [Column<Advice>; 2],
 
     /// This is the public input (instance) column.
@@ -234,9 +234,9 @@ impl<F: FieldExt> NumericInstructions<F> for FieldChip<F> {
 // ANCHOR: circuit
 /// The full circuit implementation.
 ///
-/// In this struct we store the private input variables. We use `Option<F>` because
-/// they won't have any value during key generation. During proving, if any of these
-/// were `None` we would get an error.
+/// In this struct we store the private input variables. We use `Option<F>`
+/// because they won't have any value during key generation. During proving, if
+/// any of these were `None` we would get an error.
 #[derive(Default)]
 struct MyCircuit<F: FieldExt> {
     constant: F,
@@ -245,7 +245,8 @@ struct MyCircuit<F: FieldExt> {
 }
 
 impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
-    // Since we are using a single chip for everything, we can just reuse its config.
+    // Since we are using a single chip for everything, we can just reuse its
+    // config.
     type Config = FieldConfig;
     type FloorPlanner = SimpleFloorPlanner;
 
@@ -303,8 +304,8 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
 // ANCHOR_END: circuit
 
 fn main() {
+    use curves::pasta::Fp;
     use halo2_proofs::dev::MockProver;
-    use halo2curves::pasta::Fp;
 
     // ANCHOR: test-circuit
     // The number of rows in our circuit cannot exceed 2^k. Since our example

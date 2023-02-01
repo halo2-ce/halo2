@@ -1,12 +1,10 @@
-use std::{fmt::Debug, ops::Deref};
-
-use super::commitment::{Blind, CommitmentScheme, Params, MSM};
+use super::commitment::{Blind, MSM};
 use crate::{
     arithmetic::eval_polynomial,
-    poly::{commitment, Coeff, Polynomial},
+    poly::{Coeff, Polynomial},
 };
-use ff::Field;
-use halo2curves::CurveAffine;
+use curves::CurveAffine;
+use std::fmt::Debug;
 
 pub trait Query<F>: Sized + Clone {
     type Commitment: PartialEq + Copy;

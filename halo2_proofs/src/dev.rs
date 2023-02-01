@@ -2,23 +2,19 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::fmt;
 use std::iter;
 use std::ops::{Add, Mul, Neg, Range};
-use std::time::{Duration, Instant};
 
-use blake2b_simd::blake2b;
 use ff::Field;
 
+use crate::plonk::Assigned;
 use crate::{
     arithmetic::{FieldExt, Group},
     circuit,
     plonk::{
-        permutation, Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, ColumnType,
-        ConstraintSystem, Error, Expression, Fixed, FloorPlanner, Instance, Phase, Selector,
-        VirtualCell,
+        permutation, Advice, Any, Assignment, Circuit, Column, ConstraintSystem, Error, Expression,
+        Fixed, FloorPlanner, Instance, Selector,
     },
-    poly::Rotation,
 };
 use rayon::{
     iter::{
@@ -54,11 +50,12 @@ struct Region {
     columns: HashSet<Column<Any>>,
     /// The rows that this region starts and ends on, if known.
     rows: Option<(usize, usize)>,
-    /// The selectors that have been enabled in this region. All other selectors are by
-    /// construction not enabled.
+    /// The selectors that have been enabled in this region. All other selectors
+    /// are by construction not enabled.
     enabled_selectors: HashMap<Selector, Vec<usize>>,
-    /// The cells assigned in this region. We store this as a `HashMap` with count so that if any cells
-    /// are double-assigned, they will be visibly darker.
+    /// The cells assigned in this region. We store this as a `HashMap` with
+    /// count so that if any cells are double-assigned, they will be visibly
+    /// darker.
     cells: HashMap<(Column<Any>, usize), usize>,
 }
 
@@ -165,11 +162,11 @@ impl<F: Group + Field> Mul<F> for Value<F> {
 
 /// A test prover for debugging circuits.
 ///
-/// The normal proving process, when applied to a buggy circuit implementation, might
-/// return proofs that do not validate when they should, but it can't indicate anything
-/// other than "something is invalid". `MockProver` can be used to figure out _why_ these
-/// are invalid: it stores all the private inputs along with the circuit internals, and
-/// then checks every constraint manually.
+/// The normal proving process, when applied to a buggy circuit implementation,
+/// might return proofs that do not validate when they should, but it can't
+/// indicate anything other than "something is invalid". `MockProver` can be
+/// used to figure out _why_ these are invalid: it stores all the private inputs
+/// along with the circuit internals, and then checks every constraint manually.
 ///
 /// # Examples
 ///
@@ -181,7 +178,7 @@ impl<F: Group + Field> Mul<F> for Value<F> {
 ///     plonk::{Advice, Any, Circuit, Column, ConstraintSystem, Error, Selector},
 ///     poly::Rotation,
 /// };
-/// use halo2curves::pasta::Fp;
+/// use curves::pasta::Fp;
 /// const K: u32 = 5;
 ///
 /// #[derive(Copy, Clone)]
@@ -261,9 +258,9 @@ impl<F: Group + Field> Mul<F> for Value<F> {
 ///             offset: 0,
 ///         },
 ///         cell_values: vec![
-///             (((Any::advice(), 0).into(), 0).into(), "0x2".to_string()),
-///             (((Any::advice(), 1).into(), 0).into(), "0x4".to_string()),
-///             (((Any::advice(), 2).into(), 0).into(), "0x8".to_string()),
+///             (((Any::Advice, 0).into(), 0).into(), "0x2".to_string()),
+///             (((Any::Advice, 1).into(), 0).into(), "0x4".to_string()),
+///             (((Any::Advice, 2).into(), 0).into(), "0x8".to_string()),
 ///         ],
 ///     }])
 /// );
@@ -284,8 +281,8 @@ pub struct MockProver<F: Group + Field> {
 
     /// The regions in the circuit.
     regions: Vec<Region>,
-    /// The current region being assigned to. Will be `None` after the circuit has been
-    /// synthesized.
+    /// The current region being assigned to. Will be `None` after the circuit
+    /// has been synthesized.
     current_region: Option<Region>,
 
     // The fixed cells in the circuit, arranged as [column][row].
@@ -296,8 +293,6 @@ pub struct MockProver<F: Group + Field> {
     instance: Vec<Vec<F>>,
 
     selectors: Vec<Vec<bool>>,
-
-    challenges: Vec<F>,
 
     permutation: permutation::keygen::Assembly,
 
@@ -334,8 +329,8 @@ impl<F: Field + Group> Assignment<F> for MockProver<F> {
             return Err(Error::not_enough_rows_available(self.k));
         }
 
-        // Track that this selector was enabled. We require that all selectors are enabled
-        // inside some region (i.e. no floating selectors).
+        // Track that this selector was enabled. We require that all selectors are
+        // enabled inside some region (i.e. no floating selectors).
         self.current_region
             .as_mut()
             .unwrap()
@@ -469,10 +464,6 @@ impl<F: Field + Group> Assignment<F> for MockProver<F> {
         Ok(())
     }
 
-    fn get_challenge(&self, challenge: Challenge) -> circuit::Value<F> {
-        circuit::Value::known(self.challenges[challenge.index()])
-    }
-
     fn push_namespace<NR, N>(&mut self, _: N)
     where
         NR: Into<String>,
@@ -487,8 +478,8 @@ impl<F: Field + Group> Assignment<F> for MockProver<F> {
 }
 
 impl<F: FieldExt> MockProver<F> {
-    /// Runs a synthetic keygen-and-prove operation on the given circuit, collecting data
-    /// about the constraints and their assignments.
+    /// Runs a synthetic keygen-and-prove operation on the given circuit,
+    /// collecting data about the constraints and their assignments.
     pub fn run<ConcreteCircuit: Circuit<F>>(
         k: u32,
         circuit: &ConcreteCircuit,
@@ -540,17 +531,6 @@ impl<F: FieldExt> MockProver<F> {
         let permutation = permutation::keygen::Assembly::new(n, &cs.permutation);
         let constants = cs.constants.clone();
 
-        // Use hash chain to derive deterministic challenges for testing
-        let challenges = {
-            let mut hash: [u8; 64] = blake2b(b"Halo2-MockProver").as_bytes().try_into().unwrap();
-            iter::repeat_with(|| {
-                hash = blake2b(&hash).as_bytes().try_into().unwrap();
-                F::from_bytes_wide(&hash)
-            })
-            .take(cs.num_challenges)
-            .collect()
-        };
-
         let mut prover = MockProver {
             k,
             n: n as u32,
@@ -561,7 +541,6 @@ impl<F: FieldExt> MockProver<F> {
             advice,
             instance,
             selectors,
-            challenges,
             permutation,
             usable_rows: 0..usable_rows,
         };
@@ -581,14 +560,14 @@ impl<F: FieldExt> MockProver<F> {
         Ok(prover)
     }
 
-    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors indicating
-    /// the reasons that the circuit is not satisfied.
+    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors
+    /// indicating the reasons that the circuit is not satisfied.
     pub fn verify(&self) -> Result<(), Vec<VerifyFailure>> {
         self.verify_at_rows(self.usable_rows.clone(), self.usable_rows.clone())
     }
 
-    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors indicating
-    /// the reasons that the circuit is not satisfied.
+    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors
+    /// indicating the reasons that the circuit is not satisfied.
     /// Constraints are only checked at `gate_row_ids`,
     /// and lookup inputs are only checked at `lookup_input_row_ids`
     pub fn verify_at_rows<I: Clone + Iterator<Item = usize>>(
@@ -681,7 +660,6 @@ impl<F: FieldExt> MockProver<F> {
                                     &self.cs.instance_queries,
                                     &self.instance,
                                 ),
-                                &|challenge| Value::Real(self.challenges[challenge.index()]),
                                 &|a| -a,
                                 &|a, b| a + b,
                                 &|a, b| a * b,
@@ -766,7 +744,6 @@ impl<F: FieldExt> MockProver<F> {
                                         [(row as i32 + n + rotation) as usize % n as usize],
                                 )
                             },
-                            &|challenge| Value::Real(self.challenges[challenge.index()]),
                             &|a| -a,
                             &|a, b| a + b,
                             &|a, b| a * b,
@@ -778,12 +755,13 @@ impl<F: FieldExt> MockProver<F> {
                     assert!(lookup.table_expressions.len() == lookup.input_expressions.len());
                     assert!(self.usable_rows.end > 0);
 
-                    // We optimize on the basis that the table might have been filled so that the last
-                    // usable row now has the fill contents (it doesn't matter if there was no filling).
-                    // Note that this "fill row" necessarily exists in the table, and we use that fact to
-                    // slightly simplify the optimization: we're only trying to check that all input rows
-                    // are contained in the table, and so we can safely just drop input rows that
-                    // match the fill row.
+                    // We optimize on the basis that the table might have been filled so that the
+                    // last usable row now has the fill contents (it doesn't
+                    // matter if there was no filling). Note that this "fill
+                    // row" necessarily exists in the table, and we use that fact to
+                    // slightly simplify the optimization: we're only trying to check that all input
+                    // rows are contained in the table, and so we can safely
+                    // just drop input rows that match the fill row.
                     let fill_row: Vec<_> = lookup
                         .table_expressions
                         .iter()
@@ -832,7 +810,8 @@ impl<F: FieldExt> MockProver<F> {
                                 .collect();
 
                             if t != fill_row {
-                                // Also keep track of the original input row, since we're going to sort.
+                                // Also keep track of the original input row, since we're going to
+                                // sort.
                                 Some((t, input_row))
                             } else {
                                 None
@@ -877,7 +856,7 @@ impl<F: FieldExt> MockProver<F> {
                     .get_columns()
                     .get(column)
                     .map(|c: &Column<Any>| match c.column_type() {
-                        Any::Advice(_) => self.advice[c.index()][row],
+                        Any::Advice => self.advice[c.index()][row],
                         Any::Fixed => self.fixed[c.index()][row],
                         Any::Instance => CellValue::Assigned(self.instance[c.index()][row]),
                     })
@@ -936,17 +915,18 @@ impl<F: FieldExt> MockProver<F> {
         }
     }
 
-    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors indicating
-    /// the reasons that the circuit is not satisfied.
+    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors
+    /// indicating the reasons that the circuit is not satisfied.
     /// Constraints and lookup are checked at `usable_rows`, parallelly.
     pub fn verify_par(&self) -> Result<(), Vec<VerifyFailure>> {
         self.verify_at_rows_par(self.usable_rows.clone(), self.usable_rows.clone())
     }
 
-    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors indicating
-    /// the reasons that the circuit is not satisfied.
+    /// Returns `Ok(())` if this `MockProver` is satisfied, or a list of errors
+    /// indicating the reasons that the circuit is not satisfied.
     /// Constraints are only checked at `gate_row_ids`,
-    /// and lookup inputs are only checked at `lookup_input_row_ids`, parallelly.
+    /// and lookup inputs are only checked at `lookup_input_row_ids`,
+    /// parallelly.
     pub fn verify_at_rows_par<I: Clone + Iterator<Item = usize>>(
         &self,
         gate_row_ids: I,
@@ -1050,7 +1030,6 @@ impl<F: FieldExt> MockProver<F> {
                                     &self.cs.instance_queries,
                                     &self.instance,
                                 ),
-                                &|challenge| Value::Real(self.challenges[challenge.index()]),
                                 &|a| -a,
                                 &|a, b| a + b,
                                 &|a, b| a * b,
@@ -1128,7 +1107,6 @@ impl<F: FieldExt> MockProver<F> {
                                         [(row as i32 + n + query.rotation.0) as usize % n as usize],
                                 )
                             },
-                            &|challenge| Value::Real(self.challenges[challenge.index()]),
                             &|a| -a,
                             &|a, b| a + b,
                             &|a, b| a * b,
@@ -1140,12 +1118,13 @@ impl<F: FieldExt> MockProver<F> {
                     assert!(lookup.table_expressions.len() == lookup.input_expressions.len());
                     assert!(self.usable_rows.end > 0);
 
-                    // We optimize on the basis that the table might have been filled so that the last
-                    // usable row now has the fill contents (it doesn't matter if there was no filling).
-                    // Note that this "fill row" necessarily exists in the table, and we use that fact to
-                    // slightly simplify the optimization: we're only trying to check that all input rows
-                    // are contained in the table, and so we can safely just drop input rows that
-                    // match the fill row.
+                    // We optimize on the basis that the table might have been filled so that the
+                    // last usable row now has the fill contents (it doesn't
+                    // matter if there was no filling). Note that this "fill
+                    // row" necessarily exists in the table, and we use that fact to
+                    // slightly simplify the optimization: we're only trying to check that all input
+                    // rows are contained in the table, and so we can safely
+                    // just drop input rows that match the fill row.
                     let fill_row: Vec<_> = lookup
                         .table_expressions
                         .iter()
@@ -1195,7 +1174,8 @@ impl<F: FieldExt> MockProver<F> {
                                 .collect();
 
                             if t != fill_row {
-                                // Also keep track of the original input row, since we're going to sort.
+                                // Also keep track of the original input row, since we're going to
+                                // sort.
                                 Some((t, input_row))
                             } else {
                                 None
@@ -1234,7 +1214,7 @@ impl<F: FieldExt> MockProver<F> {
                     .get_columns()
                     .get(column)
                     .map(|c: &Column<Any>| match c.column_type() {
-                        Any::Advice(_) => self.advice[c.index()][row],
+                        Any::Advice => self.advice[c.index()][row],
                         Any::Fixed => self.fixed[c.index()][row],
                         Any::Instance => CellValue::Assigned(self.instance[c.index()][row]),
                     })
@@ -1297,10 +1277,11 @@ impl<F: FieldExt> MockProver<F> {
         }
     }
 
-    /// Panics if the circuit being checked by this `MockProver` is not satisfied.
+    /// Panics if the circuit being checked by this `MockProver` is not
+    /// satisfied.
     ///
-    /// Any verification failures will be pretty-printed to stderr before the function
-    /// panics.
+    /// Any verification failures will be pretty-printed to stderr before the
+    /// function panics.
     ///
     /// Apart from the stderr output, this method is equivalent to:
     /// ```ignore
@@ -1319,7 +1300,7 @@ impl<F: FieldExt> MockProver<F> {
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::Fp;
+    use curves::pasta::Fp;
 
     use super::{FailureLocation, MockProver, VerifyFailure};
     use crate::{
@@ -1398,7 +1379,7 @@ mod tests {
                 gate: (0, "Equality check").into(),
                 region: (0, "Faulty synthesis".to_owned()).into(),
                 gate_offset: 1,
-                column: Column::new(1, Any::advice()),
+                column: Column::new(1, Any::Advice),
                 offset: 1,
             }])
         );

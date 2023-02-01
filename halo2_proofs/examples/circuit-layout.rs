@@ -1,3 +1,4 @@
+use curves::pasta::Fp;
 use ff::Field;
 use halo2_proofs::{
     arithmetic::FieldExt,
@@ -5,7 +6,6 @@ use halo2_proofs::{
     plonk::{Advice, Assigned, Circuit, Column, ConstraintSystem, Error, Fixed, TableColumn},
     poly::Rotation,
 };
-use halo2curves::pasta::Fp;
 use rand_core::OsRng;
 use std::marker::PhantomData;
 

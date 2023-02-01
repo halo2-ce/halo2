@@ -5,20 +5,18 @@ use super::{
 };
 use crate::poly::Error;
 use crate::transcript::{EncodedChallenge, TranscriptRead, TranscriptWrite};
-use ff::Field;
-use group::Curve;
-use halo2curves::{CurveAffine, CurveExt, FieldExt};
+use curves::{CurveAffine, FieldExt};
 use rand_core::RngCore;
 use std::{
     fmt::Debug,
-    io::{self, Read, Write},
+    io,
     ops::{Add, AddAssign, Mul, MulAssign},
 };
 
 /// Defines components of a commitment scheme.
 pub trait CommitmentScheme {
     /// Application field of this commitment scheme
-    type Scalar: FieldExt + halo2curves::Group;
+    type Scalar: FieldExt + curves::Group;
 
     /// Elliptic curve used to commit the application and witnesses
     type Curve: CurveAffine<ScalarExt = Self::Scalar>;
@@ -126,9 +124,6 @@ pub trait MSM<C: CurveAffine>: Clone + Debug {
 
 /// Common multi-open prover interface for various commitment schemes
 pub trait Prover<'params, Scheme: CommitmentScheme> {
-    /// Query instance or not
-    const QUERY_INSTANCE: bool;
-
     /// Creates new prover instance
     fn new(params: &'params Scheme::ParamsProver) -> Self;
 
@@ -158,9 +153,6 @@ pub trait Verifier<'params, Scheme: CommitmentScheme> {
 
     /// Accumulator fot comressed verification
     type MSMAccumulator;
-
-    /// Query instance or not
-    const QUERY_INSTANCE: bool;
 
     /// Creates new verifier instance
     fn new(params: &'params Scheme::ParamsVerifier) -> Self;

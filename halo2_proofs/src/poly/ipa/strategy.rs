@@ -1,10 +1,6 @@
-use std::marker::PhantomData;
-
-use super::commitment::{IPACommitmentScheme, ParamsIPA, ParamsVerifierIPA};
+use super::commitment::{IPACommitmentScheme, ParamsIPA};
 use super::msm::MSMIPA;
 use super::multiopen::VerifierIPA;
-use crate::poly::commitment::CommitmentScheme;
-use crate::transcript::TranscriptRead;
 use crate::{
     arithmetic::best_multiexp,
     plonk::Error,
@@ -12,12 +8,11 @@ use crate::{
         commitment::MSM,
         strategy::{Guard, VerificationStrategy},
     },
-    transcript::EncodedChallenge,
 };
+use curves::CurveAffine;
 use ff::Field;
 use group::Curve;
-use halo2curves::CurveAffine;
-use rand_core::{OsRng, RngCore};
+use rand_core::OsRng;
 
 /// Wrapper for verification accumulator
 #[derive(Debug, Clone)]
@@ -108,8 +103,9 @@ impl<'params, C: CurveAffine>
 
     /// Finalizes the batch and checks its validity.
     ///
-    /// Returns `false` if *some* proof was invalid. If the caller needs to identify
-    /// specific failing proofs, it must re-process the proofs separately.
+    /// Returns `false` if *some* proof was invalid. If the caller needs to
+    /// identify specific failing proofs, it must re-process the proofs
+    /// separately.
     #[must_use]
     fn finalize(self) -> bool {
         self.msm.check()
@@ -149,15 +145,17 @@ impl<'params, C: CurveAffine>
 
     /// Finalizes the batch and checks its validity.
     ///
-    /// Returns `false` if *some* proof was invalid. If the caller needs to identify
-    /// specific failing proofs, it must re-process the proofs separately.
+    /// Returns `false` if *some* proof was invalid. If the caller needs to
+    /// identify specific failing proofs, it must re-process the proofs
+    /// separately.
     #[must_use]
     fn finalize(self) -> bool {
         unreachable!()
     }
 }
 
-/// Computes the coefficients of $g(X) = \prod\limits_{i=0}^{k-1} (1 + u_{k - 1 - i} X^{2^i})$.
+/// Computes the coefficients of $g(X) = \prod\limits_{i=0}^{k-1} (1 + u_{k - 1
+/// - i} X^{2^i})$.
 fn compute_s<F: Field>(u: &[F], init: F) -> Vec<F> {
     assert!(!u.is_empty());
     let mut v = vec![F::zero(); 1 << u.len()];

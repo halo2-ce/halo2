@@ -77,7 +77,8 @@ impl<G: Group> EvaluationDomain<G> {
         // We use zeta here because we know it generates a coset, and it's available
         // already.
         // The coset evaluation domain is:
-        // zeta {1, extended_omega, extended_omega^2, ..., extended_omega^{(2^extended_k) - 1}}
+        // zeta {1, extended_omega, extended_omega^2, ...,
+        // extended_omega^{(2^extended_k) - 1}}
         let g_coset = G::Scalar::ZETA;
         let g_coset_inv = g_coset.square();
 
@@ -181,8 +182,8 @@ impl<G: Group> EvaluationDomain<G> {
         }
     }
 
-    /// Returns an empty (zero) polynomial in the Lagrange coefficient basis, with
-    /// deferred inversions.
+    /// Returns an empty (zero) polynomial in the Lagrange coefficient basis,
+    /// with deferred inversions.
     pub(crate) fn empty_lagrange_assigned(&self) -> Polynomial<Assigned<G>, LagrangeCoeff>
     where
         G: Field,
@@ -235,8 +236,8 @@ impl<G: Group> EvaluationDomain<G> {
         }
     }
 
-    /// This takes us from an n-length coefficient vector into a coset of the extended
-    /// evaluation domain, rotating by `rotation` if desired.
+    /// This takes us from an n-length coefficient vector into a coset of the
+    /// extended evaluation domain, rotating by `rotation` if desired.
     pub fn coeff_to_extended(
         &self,
         mut a: Polynomial<G, Coeff>,
@@ -413,20 +414,21 @@ impl<G: Group> EvaluationDomain<G> {
     ///
     /// The polynomial
     ///     $$\prod_{j=0,j \neq i}^{n - 1} (X - \omega^j)$$
-    /// has a root at all points in the domain except $\omega^i$, where it evaluates to
-    ///     $$\prod_{j=0,j \neq i}^{n - 1} (\omega^i - \omega^j)$$
-    /// and so we divide that polynomial by this value to obtain $l_i(X)$. Since
-    ///     $$\prod_{j=0,j \neq i}^{n - 1} (X - \omega^j)
+    /// has a root at all points in the domain except $\omega^i$, where it
+    /// evaluates to     $$\prod_{j=0,j \neq i}^{n - 1} (\omega^i -
+    /// \omega^j)$$ and so we divide that polynomial by this value to obtain
+    /// $l_i(X)$. Since     $$\prod_{j=0,j \neq i}^{n - 1} (X - \omega^j)
     ///       = \frac{X^n - 1}{X - \omega^i}$$
     /// then $l_i(x)$ for some $x$ is evaluated as
     ///     $$\left(\frac{x^n - 1}{x - \omega^i}\right)
-    ///       \cdot \left(\frac{1}{\prod_{j=0,j \neq i}^{n - 1} (\omega^i - \omega^j)}\right).$$
-    /// We refer to
+    ///       \cdot \left(\frac{1}{\prod_{j=0,j \neq i}^{n - 1} (\omega^i -
+    /// \omega^j)}\right).$$ We refer to
     ///     $$1 \over \prod_{j=0,j \neq i}^{n - 1} (\omega^i - \omega^j)$$
     /// as the barycentric weight of $\omega^i$.
     ///
     /// We know that for $i = 0$
-    ///     $$\frac{1}{\prod_{j=0,j \neq i}^{n - 1} (\omega^i - \omega^j)} = \frac{1}{n}.$$
+    ///     $$\frac{1}{\prod_{j=0,j \neq i}^{n - 1} (\omega^i - \omega^j)} =
+    /// \frac{1}{n}.$$
     ///
     /// If we multiply $(1 / n)$ by $\omega^i$ then we obtain
     ///     $$\frac{1}{\prod_{j=0,j \neq 0}^{n - 1} (\omega^i - \omega^j)}
@@ -490,7 +492,7 @@ fn test_rotate() {
     use rand_core::OsRng;
 
     use crate::arithmetic::eval_polynomial;
-    use halo2curves::pasta::pallas::Scalar;
+    use curves::pasta::pallas::Scalar;
 
     let domain = EvaluationDomain::<Scalar>::new(1, 3);
     let rng = OsRng;
@@ -531,7 +533,7 @@ fn test_l_i() {
     use rand_core::OsRng;
 
     use crate::arithmetic::{eval_polynomial, lagrange_interpolate};
-    use halo2curves::pasta::pallas::Scalar;
+    use curves::pasta::pallas::Scalar;
     let domain = EvaluationDomain::<Scalar>::new(1, 3);
 
     let mut l = vec![];

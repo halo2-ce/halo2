@@ -1,17 +1,15 @@
+use super::ParamsIPA;
+use crate::arithmetic::{
+    best_multiexp, compute_inner_product, eval_polynomial, parallelize, CurveAffine,
+};
 use ff::Field;
 use rand_core::RngCore;
-
-use super::{Params, ParamsIPA};
-use crate::arithmetic::{
-    best_multiexp, compute_inner_product, eval_polynomial, parallelize, CurveAffine, FieldExt,
-};
 
 use crate::poly::commitment::ParamsProver;
 use crate::poly::{commitment::Blind, Coeff, Polynomial};
 use crate::transcript::{EncodedChallenge, TranscriptWrite};
-
 use group::Curve;
-use std::io::{self, Write};
+use std::io::{self};
 
 /// Create a polynomial commitment opening proof for the polynomial defined
 /// by the coefficients `px`, the blinding factor `blind` used for the

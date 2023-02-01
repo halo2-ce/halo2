@@ -34,9 +34,9 @@ use crate::plonk::{Advice, Any, Assigned, Column, Error, Fixed, Instance, Select
 /// }
 /// ```
 ///
-/// TODO: It would be great if we could constrain the columns in these types to be
-/// "logical" columns that are guaranteed to correspond to the chip (and have come from
-/// `Chip::Config`).
+/// TODO: It would be great if we could constrain the columns in these types to
+/// be "logical" columns that are guaranteed to correspond to the chip (and have
+/// come from `Chip::Config`).
 ///
 /// [`Layouter`]: super::Layouter
 pub trait RegionLayouter<F: Field>: fmt::Debug {
@@ -57,12 +57,14 @@ pub trait RegionLayouter<F: Field>: fmt::Debug {
         to: &'v mut (dyn FnMut() -> Value<Assigned<F>> + 'v),
     ) -> Result<Cell, Error>;
 
-    /// Assigns a constant value to the column `advice` at `offset` within this region.
+    /// Assigns a constant value to the column `advice` at `offset` within this
+    /// region.
     ///
-    /// The constant value will be assigned to a cell within one of the fixed columns
-    /// configured via `ConstraintSystem::enable_constant`.
+    /// The constant value will be assigned to a cell within one of the fixed
+    /// columns configured via `ConstraintSystem::enable_constant`.
     ///
-    /// Returns the advice cell that has been equality-constrained to the constant.
+    /// Returns the advice cell that has been equality-constrained to the
+    /// constant.
     fn assign_advice_from_constant<'v>(
         &'v mut self,
         annotation: &'v (dyn Fn() -> String + 'v),
@@ -95,12 +97,14 @@ pub trait RegionLayouter<F: Field>: fmt::Debug {
 
     /// Constrains a cell to have a constant value.
     ///
-    /// Returns an error if the cell is in a column where equality has not been enabled.
+    /// Returns an error if the cell is in a column where equality has not been
+    /// enabled.
     fn constrain_constant(&mut self, cell: Cell, constant: Assigned<F>) -> Result<(), Error>;
 
     /// Constraint two cells to have the same value.
     ///
-    /// Returns an error if either of the cells is not within the given permutation.
+    /// Returns an error if either of the cells is not within the given
+    /// permutation.
     fn constrain_equal(&mut self, left: Cell, right: Cell) -> Result<(), Error>;
 }
 
