@@ -4,20 +4,9 @@ mod verifier;
 pub use prover::ProverGWC;
 pub use verifier::VerifierGWC;
 
-use crate::{
-    arithmetic::{eval_polynomial, CurveAffine, FieldExt},
-    poly::{
-        commitment::{Params, ParamsVerifier},
-        query::Query,
-        Coeff, Polynomial,
-    },
-    transcript::ChallengeScalar,
-};
+use crate::{arithmetic::FieldExt, poly::query::Query, transcript::ChallengeScalar};
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    marker::PhantomData,
-};
+use std::marker::PhantomData;
 
 #[derive(Clone, Copy, Debug)]
 struct U {}

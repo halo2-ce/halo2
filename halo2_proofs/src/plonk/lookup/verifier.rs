@@ -12,27 +12,30 @@ use crate::{
 };
 use ff::Field;
 
+#[derive(Debug)]
 pub struct PermutationCommitments<C: CurveAffine> {
-    permuted_input_commitment: C,
-    permuted_table_commitment: C,
+    pub permuted_input_commitment: C,
+    pub permuted_table_commitment: C,
 }
 
+#[derive(Debug)]
 pub struct Committed<C: CurveAffine> {
-    permuted: PermutationCommitments<C>,
-    product_commitment: C,
+    pub permuted: PermutationCommitments<C>,
+    pub product_commitment: C,
 }
 
+#[derive(Debug)]
 pub struct Evaluated<C: CurveAffine> {
-    committed: Committed<C>,
-    product_eval: C::Scalar,
-    product_next_eval: C::Scalar,
-    permuted_input_eval: C::Scalar,
-    permuted_input_inv_eval: C::Scalar,
-    permuted_table_eval: C::Scalar,
+    pub committed: Committed<C>,
+    pub product_eval: C::Scalar,
+    pub product_next_eval: C::Scalar,
+    pub permuted_input_eval: C::Scalar,
+    pub permuted_input_inv_eval: C::Scalar,
+    pub permuted_table_eval: C::Scalar,
 }
 
 impl<F: FieldExt> Argument<F> {
-    pub(in crate::plonk) fn read_permuted_commitments<
+    pub fn read_permuted_commitments<
         C: CurveAffine,
         E: EncodedChallenge<C>,
         T: TranscriptRead<C, E>,
@@ -51,10 +54,7 @@ impl<F: FieldExt> Argument<F> {
 }
 
 impl<C: CurveAffine> PermutationCommitments<C> {
-    pub(in crate::plonk) fn read_product_commitment<
-        E: EncodedChallenge<C>,
-        T: TranscriptRead<C, E>,
-    >(
+    pub fn read_product_commitment<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
         self,
         transcript: &mut T,
     ) -> Result<Committed<C>, Error> {
@@ -68,7 +68,7 @@ impl<C: CurveAffine> PermutationCommitments<C> {
 }
 
 impl<C: CurveAffine> Committed<C> {
-    pub(crate) fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
+    pub fn evaluate<E: EncodedChallenge<C>, T: TranscriptRead<C, E>>(
         self,
         transcript: &mut T,
     ) -> Result<Evaluated<C>, Error> {
@@ -102,13 +102,13 @@ impl<C: CurveAffine> Evaluated<C> {
         advice_evals: &[C::Scalar],
         fixed_evals: &[C::Scalar],
         instance_evals: &[C::Scalar],
-        challenges: &[C::Scalar],
     ) -> impl Iterator<Item = C::Scalar> + 'a {
         let active_rows = C::Scalar::one() - (l_last + l_blind);
 
         let product_expression = || {
             // z(\omega X) (a'(X) + \beta) (s'(X) + \gamma)
-            // - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
+            // - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X)
+            //   + ... + s_{m-1}(X) + \gamma)
             let left = self.product_next_eval
                 * &(self.permuted_input_eval + &*beta)
                 * &(self.permuted_table_eval + &*gamma);
@@ -123,7 +123,6 @@ impl<C: CurveAffine> Evaluated<C> {
                             &|query| fixed_evals[query.index],
                             &|query| advice_evals[query.index],
                             &|query| instance_evals[query.index],
-                            &|challenge| challenges[challenge.index()],
                             &|a| -a,
                             &|a, b| a + &b,
                             &|a, b| a * &b,
@@ -151,7 +150,8 @@ impl<C: CurveAffine> Evaluated<C> {
             .chain(
                 // (1 - (l_last(X) + l_blind(X))) * (
                 //   z(\omega X) (a'(X) + \beta) (s'(X) + \gamma)
-                //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
+                //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X) +
+                //     ... + s_{m-1}(X) + \gamma)
                 // ) = 0
                 Some(product_expression()),
             )

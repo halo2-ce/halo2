@@ -4,8 +4,8 @@ use tabbycat::{AttrList, Edge, GraphBuilder, GraphType, Identity, StmtList};
 use crate::{
     circuit::Value,
     plonk::{
-        Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, ConstraintSystem, Error,
-        Fixed, FloorPlanner, Instance, Selector,
+        Advice, Any, Assigned, Assignment, Circuit, Column, ConstraintSystem, Error, Fixed,
+        FloorPlanner, Instance, Selector,
     },
 };
 
@@ -13,8 +13,8 @@ pub mod layout;
 
 /// Builds a dot graph string representing the given circuit.
 ///
-/// The graph is built from calls to [`Layouter::namespace`] both within the circuit, and
-/// inside the gadgets and chips that it uses.
+/// The graph is built from calls to [`Layouter::namespace`] both within the
+/// circuit, and inside the gadgets and chips that it uses.
 ///
 /// [`Layouter::namespace`]: crate::circuit::Layouter#method.namespace
 pub fn circuit_dot_graph<F: Field, ConcreteCircuit: Circuit<F>>(
@@ -26,8 +26,8 @@ pub fn circuit_dot_graph<F: Field, ConcreteCircuit: Circuit<F>>(
     let mut graph = Graph::default();
     ConcreteCircuit::FloorPlanner::synthesize(&mut graph, circuit, config, cs.constants).unwrap();
 
-    // Construct the node labels. We need to store these, because tabbycat operates on
-    // string references, and we need those references to live long enough.
+    // Construct the node labels. We need to store these, because tabbycat operates
+    // on string references, and we need those references to live long enough.
     let node_labels: Vec<_> = graph
         .nodes
         .into_iter()
@@ -155,10 +155,6 @@ impl<F: Field> Assignment<F> for Graph {
         _: Value<Assigned<F>>,
     ) -> Result<(), Error> {
         Ok(())
-    }
-
-    fn get_challenge(&self, _: Challenge) -> Value<F> {
-        Value::unknown()
     }
 
     fn push_namespace<NR, N>(&mut self, name_fn: N)

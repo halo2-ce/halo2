@@ -1,6 +1,5 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-
 use group::ff::Field;
+use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A value assigned to a cell within a circuit.
 ///
@@ -346,8 +345,8 @@ impl<F: Field> Assigned<F> {
         }
     }
 
-    /// Evaluates this assigned value directly, performing an unbatched inversion if
-    /// necessary.
+    /// Evaluates this assigned value directly, performing an unbatched
+    /// inversion if necessary.
     ///
     /// If the denominator is zero, this returns zero.
     pub fn evaluate(self) -> F {
@@ -367,7 +366,7 @@ impl<F: Field> Assigned<F> {
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::Fp;
+    use curves::pasta::Fp;
 
     use super::Assigned;
     // We use (numerator, denominator) in the comments below to denote a rational.
@@ -444,15 +443,13 @@ mod tests {
 
 #[cfg(test)]
 mod proptests {
+    use curves::pasta::Fp;
+    use group::ff::Field;
+    use proptest::{collection::vec, prelude::*, sample::select};
     use std::{
         cmp,
-        convert::TryFrom,
         ops::{Add, Mul, Neg, Sub},
     };
-
-    use group::ff::Field;
-    use halo2curves::{pasta::Fp, FieldExt};
-    use proptest::{collection::vec, prelude::*, sample::select};
 
     use super::Assigned;
 

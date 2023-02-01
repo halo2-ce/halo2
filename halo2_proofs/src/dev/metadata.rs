@@ -33,8 +33,8 @@ impl From<plonk::Column<Any>> for Column {
     }
 }
 
-/// A "virtual cell" is a PLONK cell that has been queried at a particular relative offset
-/// within a custom gate.
+/// A "virtual cell" is a PLONK cell that has been queried at a particular
+/// relative offset within a custom gate.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct VirtualCell {
     name: &'static str,
@@ -85,11 +85,12 @@ impl fmt::Display for VirtualCell {
 /// Metadata about a configured gate within a circuit.
 #[derive(Debug, PartialEq)]
 pub struct Gate {
-    /// The index of the active gate. These indices are assigned in the order in which
-    /// `ConstraintSystem::create_gate` is called during `Circuit::configure`.
+    /// The index of the active gate. These indices are assigned in the order in
+    /// which `ConstraintSystem::create_gate` is called during
+    /// `Circuit::configure`.
     pub(super) index: usize,
-    /// The name of the active gate. These are specified by the gate creator (such as
-    /// a chip implementation), and is not enforced to be unique.
+    /// The name of the active gate. These are specified by the gate creator
+    /// (such as a chip implementation), and is not enforced to be unique.
     pub(super) name: &'static str,
 }
 
@@ -110,12 +111,13 @@ impl From<(usize, &'static str)> for Gate {
 pub struct Constraint {
     /// The gate containing the constraint.
     pub(super) gate: Gate,
-    /// The index of the polynomial constraint within the gate. These indices correspond
-    /// to the order in which the constraints are returned from the closure passed to
-    /// `ConstraintSystem::create_gate` during `Circuit::configure`.
+    /// The index of the polynomial constraint within the gate. These indices
+    /// correspond to the order in which the constraints are returned from
+    /// the closure passed to `ConstraintSystem::create_gate` during
+    /// `Circuit::configure`.
     pub(super) index: usize,
-    /// The name of the constraint. This is specified by the gate creator (such as a chip
-    /// implementation), and is not enforced to be unique.
+    /// The name of the constraint. This is specified by the gate creator (such
+    /// as a chip implementation), and is not enforced to be unique.
     pub(super) name: &'static str,
 }
 
@@ -145,11 +147,12 @@ impl From<(Gate, usize, &'static str)> for Constraint {
 /// Metadata about an assigned region within a circuit.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Region {
-    /// The index of the region. These indices are assigned in the order in which
-    /// `Layouter::assign_region` is called during `Circuit::synthesize`.
+    /// The index of the region. These indices are assigned in the order in
+    /// which `Layouter::assign_region` is called during
+    /// `Circuit::synthesize`.
     pub(super) index: usize,
-    /// The name of the region. This is specified by the region creator (such as a chip
-    /// implementation), and is not enforced to be unique.
+    /// The name of the region. This is specified by the region creator (such as
+    /// a chip implementation), and is not enforced to be unique.
     pub(super) name: String,
 }
 

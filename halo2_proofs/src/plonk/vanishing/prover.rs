@@ -6,10 +6,9 @@ use rand_core::RngCore;
 
 use super::Argument;
 use crate::{
-    arithmetic::{eval_polynomial, CurveAffine, FieldExt},
-    plonk::{ChallengeX, ChallengeY, Error},
+    arithmetic::{eval_polynomial, CurveAffine},
+    plonk::{ChallengeX, Error},
     poly::{
-        self,
         commitment::{Blind, ParamsProver},
         Coeff, EvaluationDomain, ExtendedLagrangeCoeff, Polynomial, ProverQuery,
     },
@@ -34,6 +33,9 @@ pub(in crate::plonk) struct Evaluated<C: CurveAffine> {
 }
 
 impl<C: CurveAffine> Argument<C> {
+    /// This commitment scheme commits to a _zero polynomial_,
+    /// that means our commitment scheme is binding but not hidding.
+    /// This is fine for schemes that does not require zero-knowledge.
     pub(in crate::plonk) fn commit<
         'params,
         P: ParamsProver<'params, C>,
@@ -41,21 +43,18 @@ impl<C: CurveAffine> Argument<C> {
         R: RngCore,
         T: TranscriptWrite<C, E>,
     >(
-        params: &P,
+        _params: &P,
         domain: &EvaluationDomain<C::Scalar>,
-        mut rng: R,
+        mut _rng: R,
         transcript: &mut T,
     ) -> Result<Committed<C>, Error> {
         // Sample a random polynomial of degree n - 1
-        let mut random_poly = domain.empty_coeff();
-        for coeff in random_poly.iter_mut() {
-            *coeff = C::Scalar::random(&mut rng);
-        }
+        let random_poly = domain.empty_coeff();
         // Sample a random blinding factor
-        let random_blind = Blind(C::Scalar::random(rng));
-
-        // Commit
-        let c = params.commit(&random_poly, random_blind).to_affine();
+        let random_blind = Blind(C::Scalar::zero());
+        let c = C::identity();
+        // We write the identity point to the transcript which
+        // is the commitment of the zero polynomial.
         transcript.write_point(c)?;
 
         Ok(Committed {

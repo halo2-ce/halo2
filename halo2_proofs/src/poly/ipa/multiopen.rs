@@ -6,11 +6,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::*;
-use crate::{
-    arithmetic::{CurveAffine, FieldExt},
-    poly::query::Query,
-    transcript::ChallengeScalar,
-};
+use crate::{arithmetic::FieldExt, poly::query::Query, transcript::ChallengeScalar};
 
 mod prover;
 mod verifier;
@@ -25,7 +21,8 @@ type ChallengeX1<F> = ChallengeScalar<F, X1>;
 
 #[derive(Clone, Copy, Debug)]
 struct X2 {}
-/// Challenge for keeping the multi-point quotient polynomial terms linearly independent.
+/// Challenge for keeping the multi-point quotient polynomial terms linearly
+/// independent.
 type ChallengeX2<F> = ChallengeScalar<F, X2>;
 
 #[derive(Clone, Copy, Debug)]
@@ -35,8 +32,8 @@ type ChallengeX3<F> = ChallengeScalar<F, X3>;
 
 #[derive(Clone, Copy, Debug)]
 struct X4 {}
-/// Challenge for collapsing the openings of the various remaining polynomials at x_3
-/// together.
+/// Challenge for collapsing the openings of the various remaining polynomials
+/// at x_3 together.
 type ChallengeX4<F> = ChallengeScalar<F, X4>;
 
 #[derive(Debug)]

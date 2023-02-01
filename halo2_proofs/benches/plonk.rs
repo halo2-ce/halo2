@@ -1,13 +1,13 @@
 #[macro_use]
 extern crate criterion;
 
+use curves::pasta::{EqAffine, Fp};
 use group::ff::Field;
 use halo2_proofs::arithmetic::FieldExt;
 use halo2_proofs::circuit::{Cell, Layouter, SimpleFloorPlanner, Value};
 use halo2_proofs::plonk::*;
 use halo2_proofs::poly::{commitment::ParamsProver, Rotation};
 use halo2_proofs::transcript::{Blake2bRead, Blake2bWrite, Challenge255};
-use halo2curves::pasta::{EqAffine, Fp};
 use rand_core::OsRng;
 
 use halo2_proofs::{
@@ -27,7 +27,8 @@ use std::marker::PhantomData;
 use criterion::{BenchmarkId, Criterion};
 
 fn criterion_benchmark(c: &mut Criterion) {
-    /// This represents an advice column at a certain row in the ConstraintSystem
+    /// This represents an advice column at a certain row in the
+    /// ConstraintSystem
     #[derive(Copy, Clone, Debug)]
     pub struct Variable(Column<Advice>, usize);
 

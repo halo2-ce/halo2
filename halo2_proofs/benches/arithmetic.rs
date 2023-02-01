@@ -2,7 +2,7 @@
 extern crate criterion;
 
 use crate::arithmetic::small_multiexp;
-use crate::halo2curves::pasta::{EqAffine, Fp};
+use crate::curves::pasta::{EqAffine, Fp};
 use group::ff::Field;
 use halo2_proofs::*;
 

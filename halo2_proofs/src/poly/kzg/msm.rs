@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
-use super::commitment::{KZGCommitmentScheme, ParamsKZG};
+use super::commitment::ParamsKZG;
 use crate::{
-    arithmetic::{best_multiexp, parallelize, CurveAffine},
+    arithmetic::{best_multiexp, parallelize},
     poly::commitment::MSM,
 };
+use curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
 use group::{Curve, Group};
-use halo2curves::pairing::{Engine, MillerLoopResult, MultiMillerLoop};
 
 /// A multiscalar multiplication in the polynomial commitment scheme
 #[derive(Clone, Default, Debug)]
@@ -92,8 +92,6 @@ impl<E: Engine + Debug> PreMSM<E> {
     }
 
     pub(crate) fn normalize(self) -> MSMKZG<E> {
-        use group::prime::PrimeCurveAffine;
-
         let (scalars, bases) = self
             .projectives_msms
             .into_iter()
@@ -147,20 +145,22 @@ impl<'a, E: MultiMillerLoop + Debug> DualMSM<'a, E> {
         self.right.add_msm(&other.right);
     }
 
-    /// Performs final pairing check with given verifier params and two channel linear combination
+    /// Performs final pairing check with given verifier params and two channel
+    /// linear combination
     pub fn check(self) -> bool {
         let s_g2_prepared = E::G2Prepared::from(self.params.s_g2);
         let n_g2_prepared = E::G2Prepared::from(-self.params.g2);
 
-        let left = self.left.eval();
-        let right = self.right.eval();
+        let left: <E as Engine>::G1Affine = self.left.eval().into();
+        let right: <E as Engine>::G1Affine = self.right.eval().into();
 
-        let (term_1, term_2) = (
-            (&left.into(), &s_g2_prepared),
-            (&right.into(), &n_g2_prepared),
-        );
+        let (term_1, term_2) = ((&left, &s_g2_prepared), (&right, &n_g2_prepared));
         let terms = &[term_1, term_2];
 
+        log::debug!(
+            "check pairing: {:?}",
+            (left, right, self.params.s_g2, -self.params.g2)
+        );
         bool::from(
             E::multi_miller_loop(&terms[..])
                 .final_exponentiation()

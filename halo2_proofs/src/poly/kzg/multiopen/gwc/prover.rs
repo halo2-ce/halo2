@@ -1,23 +1,17 @@
 use super::{construct_intermediate_sets, ChallengeV, Query};
-use crate::arithmetic::{eval_polynomial, kate_division, powers, CurveAffine, FieldExt};
+use crate::arithmetic::{kate_division, powers};
 
 use crate::poly::commitment::ParamsProver;
 use crate::poly::commitment::Prover;
 use crate::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
 use crate::poly::query::ProverQuery;
-use crate::poly::Rotation;
-use crate::poly::{
-    commitment::{Blind, Params},
-    Coeff, Polynomial,
-};
+use crate::poly::{commitment::Blind, Polynomial};
 use crate::transcript::{EncodedChallenge, TranscriptWrite};
-
-use ff::Field;
+use curves::pairing::Engine;
 use group::Curve;
-use halo2curves::pairing::Engine;
 use rand_core::RngCore;
 use std::fmt::Debug;
-use std::io::{self, Write};
+use std::io::{self};
 use std::marker::PhantomData;
 
 /// Concrete KZG prover with GWC variant
@@ -28,8 +22,6 @@ pub struct ProverGWC<'params, E: Engine> {
 
 /// Create a multi-opening proof
 impl<'params, E: Engine + Debug> Prover<'params, KZGCommitmentScheme<E>> for ProverGWC<'params, E> {
-    const QUERY_INSTANCE: bool = false;
-
     fn new(params: &'params ParamsKZG<E>) -> Self {
         Self { params }
     }

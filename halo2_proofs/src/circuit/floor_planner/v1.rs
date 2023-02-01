@@ -9,8 +9,8 @@ use crate::{
         Cell, Layouter, Region, RegionIndex, RegionStart, Table, Value,
     },
     plonk::{
-        Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, Error, Fixed, FloorPlanner,
-        Instance, Selector, TableColumn,
+        Advice, Any, Assigned, Assignment, Circuit, Column, Error, Fixed, FloorPlanner, Instance,
+        Selector, TableColumn,
     },
 };
 
@@ -18,12 +18,12 @@ mod strategy;
 
 /// The version 1 [`FloorPlanner`] provided by `halo2`.
 ///
-/// - No column optimizations are performed. Circuit configuration is left entirely to the
-///   circuit designer.
+/// - No column optimizations are performed. Circuit configuration is left
+///   entirely to the circuit designer.
 /// - A dual-pass layouter is used to measures regions prior to assignment.
 /// - Regions are measured as rectangles, bounded on the cells they assign.
-/// - Regions are laid out using a greedy first-fit strategy, after sorting regions by
-///   their "advice area" (number of advice columns * rows).
+/// - Regions are laid out using a greedy first-fit strategy, after sorting
+///   regions by their "advice area" (number of advice columns * rows).
 #[derive(Debug)]
 pub struct V1;
 
@@ -31,7 +31,8 @@ struct V1Plan<'a, F: Field, CS: Assignment<F> + 'a> {
     cs: &'a mut CS,
     /// Stores the starting row for each region.
     regions: Vec<RegionStart>,
-    /// Stores the constants to be assigned, and the cells to which they are copied.
+    /// Stores the constants to be assigned, and the cells to which they are
+    /// copied.
     constants: Vec<(Assigned<F>, Cell)>,
     /// Stores the table fixed columns.
     table_columns: Vec<TableColumn>,
@@ -199,13 +200,6 @@ impl<'p, 'a, F: Field, CS: Assignment<F> + 'a> Layouter<F> for V1Pass<'p, 'a, F,
         }
     }
 
-    fn get_challenge(&self, challenge: Challenge) -> Value<F> {
-        match &self.0 {
-            Pass::Measurement(_) => Value::unknown(),
-            Pass::Assignment(pass) => pass.plan.cs.get_challenge(challenge),
-        }
-    }
-
     fn get_root(&mut self) -> &mut Self::Root {
         self
     }
@@ -299,7 +293,8 @@ impl<'p, 'a, F: Field, CS: Assignment<F> + 'a> AssignmentPass<'p, 'a, F, CS> {
         N: Fn() -> NR,
         NR: Into<String>,
     {
-        // Maintenance hazard: there is near-duplicate code in `SingleChipLayouter::assign_table`.
+        // Maintenance hazard: there is near-duplicate code in
+        // `SingleChipLayouter::assign_table`.
 
         // Assign table cells.
         self.plan.cs.enter_region(name);
@@ -495,7 +490,7 @@ impl<'r, 'a, F: Field, CS: Assignment<F> + 'a> RegionLayouter<F> for V1Region<'r
 
 #[cfg(test)]
 mod tests {
-    use halo2curves::pasta::vesta;
+    use curves::pasta::vesta;
 
     use crate::{
         dev::MockProver,

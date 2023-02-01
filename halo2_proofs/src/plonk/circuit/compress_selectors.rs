@@ -230,7 +230,7 @@ where
 mod tests {
     use super::*;
     use crate::{plonk::FixedQuery, poly::Rotation};
-    use halo2curves::pasta::Fp;
+    use curves::pasta::Fp;
     use proptest::collection::{vec, SizeRange};
     use proptest::prelude::*;
 
@@ -323,7 +323,6 @@ mod tests {
                             assert_eq!(selector.combination_index, query.index);
                             assignment
                         },
-                        &|_| panic!("should not occur in returned expressions"),
                         &|_| panic!("should not occur in returned expressions"),
                         &|_| panic!("should not occur in returned expressions"),
                         &|a| -a,

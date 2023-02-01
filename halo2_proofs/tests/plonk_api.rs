@@ -24,7 +24,8 @@ use std::marker::PhantomData;
 fn plonk_api() {
     const K: u32 = 5;
 
-    /// This represents an advice column at a certain row in the ConstraintSystem
+    /// This represents an advice column at a certain row in the
+    /// ConstraintSystem
     #[derive(Copy, Clone, Debug)]
     pub struct Variable(Column<Advice>, usize);
 
@@ -533,10 +534,10 @@ fn plonk_api() {
     }
 
     fn test_plonk_api_gwc() {
+        use curves::bn256::Bn256;
         use halo2_proofs::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use halo2_proofs::poly::kzg::multiopen::{ProverGWC, VerifierGWC};
         use halo2_proofs::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::Bn256;
 
         type Scheme = KZGCommitmentScheme<Bn256>;
         bad_keys!(Scheme);
@@ -562,10 +563,10 @@ fn plonk_api() {
     }
 
     fn test_plonk_api_shplonk() {
+        use curves::bn256::Bn256;
         use halo2_proofs::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use halo2_proofs::poly::kzg::multiopen::{ProverSHPLONK, VerifierSHPLONK};
         use halo2_proofs::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::Bn256;
 
         type Scheme = KZGCommitmentScheme<Bn256>;
         bad_keys!(Scheme);
@@ -591,10 +592,10 @@ fn plonk_api() {
     }
 
     fn test_plonk_api_ipa() {
+        use curves::pasta::EqAffine;
         use halo2_proofs::poly::ipa::commitment::{IPACommitmentScheme, ParamsIPA};
         use halo2_proofs::poly::ipa::multiopen::{ProverIPA, VerifierIPA};
         use halo2_proofs::poly::ipa::strategy::AccumulatorStrategy;
-        use halo2curves::pasta::EqAffine;
 
         type Scheme = IPACommitmentScheme<EqAffine>;
         bad_keys!(Scheme);
@@ -1020,7 +1021,6 @@ fn plonk_api() {
             );
         }
     }
-
     test_plonk_api_ipa();
     test_plonk_api_gwc();
     test_plonk_api_shplonk();

@@ -1,33 +1,29 @@
 #[cfg(test)]
 mod test {
-    use crate::arithmetic::{eval_polynomial, FieldExt};
+    use crate::arithmetic::eval_polynomial;
     use crate::plonk::Error;
+    use crate::poly::commitment::Blind;
     use crate::poly::commitment::ParamsProver;
-    use crate::poly::commitment::{Blind, ParamsVerifier, MSM};
-    use crate::poly::query::PolynomialPointer;
     use crate::poly::{
         commitment::{CommitmentScheme, Params, Prover, Verifier},
         query::{ProverQuery, VerifierQuery},
         strategy::VerificationStrategy,
         EvaluationDomain,
     };
-    use crate::poly::{Coeff, Polynomial};
     use crate::transcript::{
-        self, Blake2bRead, Blake2bWrite, Challenge255, EncodedChallenge, TranscriptRead,
-        TranscriptReadBuffer, TranscriptWrite, TranscriptWriterBuffer,
+        Blake2bRead, Blake2bWrite, Challenge255, EncodedChallenge, TranscriptReadBuffer,
+        TranscriptWriterBuffer,
     };
-    use ff::Field;
-    use group::{Curve, Group};
-    use halo2curves::CurveAffine;
-    use rand_core::{OsRng, RngCore};
-    use std::io::{Read, Write};
+    use curves::CurveAffine;
+    use group::Curve;
+    use rand_core::OsRng;
 
     #[test]
     fn test_roundtrip_ipa() {
         use crate::poly::ipa::commitment::{IPACommitmentScheme, ParamsIPA};
         use crate::poly::ipa::multiopen::{ProverIPA, VerifierIPA};
         use crate::poly::ipa::strategy::AccumulatorStrategy;
-        use halo2curves::pasta::{Ep, EqAffine, Fp};
+        use curves::pasta::EqAffine;
 
         const K: u32 = 4;
 
@@ -64,8 +60,7 @@ mod test {
         use crate::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use crate::poly::kzg::multiopen::{ProverGWC, VerifierGWC};
         use crate::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::{Bn256, G1Affine};
-        use halo2curves::pairing::Engine;
+        use curves::bn256::Bn256;
 
         const K: u32 = 4;
 
@@ -96,8 +91,7 @@ mod test {
         use crate::poly::kzg::commitment::{KZGCommitmentScheme, ParamsKZG};
         use crate::poly::kzg::multiopen::{ProverSHPLONK, VerifierSHPLONK};
         use crate::poly::kzg::strategy::AccumulatorStrategy;
-        use halo2curves::bn256::{Bn256, G1Affine};
-        use halo2curves::pairing::Engine;
+        use curves::bn256::Bn256;
 
         const K: u32 = 4;
 

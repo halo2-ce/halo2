@@ -6,7 +6,7 @@ use group::ff::Field;
 use super::FailureLocation;
 use crate::{
     dev::{metadata, util},
-    plonk::{Advice, Any, Expression},
+    plonk::{Any, Expression},
 };
 
 fn padded(p: char, width: usize, text: &str) -> String {
@@ -21,9 +21,9 @@ fn padded(p: char, width: usize, text: &str) -> String {
 
 /// Renders a cell layout around a given failure location.
 ///
-/// `highlight_row` is called at the end of each row, with the offset of the active row
-/// (if `location` is in a region), and the rotation of the current row relative to the
-/// active row.
+/// `highlight_row` is called at the end of each row, with the offset of the
+/// active row (if `location` is in a region), and the rotation of the current
+/// row relative to the active row.
 pub(super) fn render_cell_layout(
     prefix: &str,
     location: &FailureLocation,
@@ -33,8 +33,8 @@ pub(super) fn render_cell_layout(
 ) {
     let col_width = |cells: usize| cells.to_string().len() + 3;
 
-    // If we are in a region, show rows at offsets relative to it. Otherwise, just show
-    // the rotations directly.
+    // If we are in a region, show rows at offsets relative to it. Otherwise, just
+    // show the rotations directly.
     let offset = match location {
         FailureLocation::InRegion { region, offset } => {
             eprintln!("{}Cell layout in region '{}':", prefix, region.name);
@@ -59,7 +59,7 @@ pub(super) fn render_cell_layout(
                 &format!(
                     "{}{}",
                     match column.column_type {
-                        Any::Advice(_) => "A",
+                        Any::Advice => "A",
                         Any::Fixed => "F",
                         Any::Instance => "I",
                     },
@@ -121,13 +121,7 @@ pub(super) fn expression_to_string<F: Field>(
             layout
                 .get(&query.rotation.0)
                 .unwrap()
-                .get(
-                    &(
-                        Any::Advice(Advice { phase: query.phase }),
-                        query.column_index,
-                    )
-                        .into(),
-                )
+                .get(&(Any::Advice, query.column_index).into())
                 .unwrap()
                 .clone()
         },
@@ -139,7 +133,6 @@ pub(super) fn expression_to_string<F: Field>(
                 .unwrap()
                 .clone()
         },
-        &|challenge| format!("C{}({})", challenge.index(), challenge.phase()),
         &|a| {
             if a.contains(' ') {
                 format!("-({})", a)

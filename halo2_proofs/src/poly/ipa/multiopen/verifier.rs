@@ -1,22 +1,14 @@
-use std::fmt::Debug;
-use std::io::Read;
-use std::marker::PhantomData;
-
-use ff::Field;
-use rand_core::RngCore;
-
-use super::{
-    construct_intermediate_sets, ChallengeX1, ChallengeX2, ChallengeX3, ChallengeX4, Query,
-};
-use crate::arithmetic::{eval_polynomial, lagrange_interpolate, CurveAffine, FieldExt};
+use super::{construct_intermediate_sets, ChallengeX1, ChallengeX2, ChallengeX3, ChallengeX4};
+use crate::arithmetic::{eval_polynomial, lagrange_interpolate, CurveAffine};
 use crate::poly::commitment::{Params, Verifier, MSM};
 use crate::poly::ipa::commitment::{IPACommitmentScheme, ParamsIPA, ParamsVerifierIPA};
 use crate::poly::ipa::msm::MSMIPA;
 use crate::poly::ipa::strategy::GuardIPA;
 use crate::poly::query::{CommitmentReference, VerifierQuery};
-use crate::poly::strategy::VerificationStrategy;
 use crate::poly::Error;
 use crate::transcript::{EncodedChallenge, TranscriptRead};
+use ff::Field;
+use std::fmt::Debug;
 
 /// IPA multi-open verifier
 #[derive(Debug)]
@@ -29,8 +21,6 @@ impl<'params, C: CurveAffine> Verifier<'params, IPACommitmentScheme<C>>
 {
     type Guard = GuardIPA<'params, C>;
     type MSMAccumulator = MSMIPA<'params, C>;
-
-    const QUERY_INSTANCE: bool = true;
 
     fn new(params: &'params ParamsVerifierIPA<C>) -> Self {
         Self { params }

@@ -44,12 +44,14 @@ impl EmptySpace {
 
 /// Allocated rows within a column.
 ///
-/// This is a set of [a_start, a_end) pairs representing disjoint allocated intervals.
+/// This is a set of [a_start, a_end) pairs representing disjoint allocated
+/// intervals.
 #[derive(Clone, Default, Debug)]
 pub struct Allocations(BTreeSet<AllocatedRegion>);
 
 impl Allocations {
-    /// Returns the row that forms the unbounded unallocated interval [row, None).
+    /// Returns the row that forms the unbounded unallocated interval [row,
+    /// None).
     pub(crate) fn unbounded_interval_start(&self) -> usize {
         self.0
             .iter()
@@ -58,7 +60,8 @@ impl Allocations {
             .unwrap_or(0)
     }
 
-    /// Return all the *unallocated* nonempty intervals intersecting [start, end).
+    /// Return all the *unallocated* nonempty intervals intersecting [start,
+    /// end).
     ///
     /// `end = None` represents an unbounded end.
     pub(crate) fn free_intervals(
@@ -102,8 +105,8 @@ impl Allocations {
 pub type CircuitAllocations = HashMap<RegionColumn, Allocations>;
 
 /// - `start` is the current start row of the region (not of this column).
-/// - `slack` is the maximum number of rows the start could be moved down, taking into
-///   account prior columns.
+/// - `slack` is the maximum number of rows the start could be moved down,
+///   taking into account prior columns.
 fn first_fit_region(
     column_allocations: &mut CircuitAllocations,
     region_columns: &[RegionColumn],
@@ -117,7 +120,8 @@ fn first_fit_region(
     };
     let end = slack.map(|slack| start + region_length + slack);
 
-    // Iterate over the unallocated non-empty intervals in c that intersect [start, end).
+    // Iterate over the unallocated non-empty intervals in c that intersect [start,
+    // end).
     for space in column_allocations
         .entry(*c)
         .or_default()
@@ -160,8 +164,8 @@ fn first_fit_region(
     None
 }
 
-/// Positions the regions starting at the earliest row for which none of the columns are
-/// in use, taking into account gaps between earlier regions.
+/// Positions the regions starting at the earliest row for which none of the
+/// columns are in use, taking into account gaps between earlier regions.
 fn slot_in(
     region_shapes: Vec<RegionShape>,
 ) -> (Vec<(RegionStart, RegionShape)>, CircuitAllocations) {
@@ -194,7 +198,8 @@ fn slot_in(
     (regions, column_allocations)
 }
 
-/// Sorts the regions by advice area and then lays them out with the [`slot_in`] strategy.
+/// Sorts the regions by advice area and then lays them out with the [`slot_in`]
+/// strategy.
 pub fn slot_in_biggest_advice_first(
     region_shapes: Vec<RegionShape>,
 ) -> (Vec<RegionStart>, CircuitAllocations) {
@@ -205,7 +210,7 @@ pub fn slot_in_biggest_advice_first(
             .columns()
             .iter()
             .filter(|c| match c {
-                RegionColumn::Column(c) => matches!(c.column_type(), Any::Advice(_)),
+                RegionColumn::Column(c) => matches!(c.column_type(), Any::Advice),
                 _ => false,
             })
             .count();
@@ -231,7 +236,7 @@ fn test_slot_in() {
     let regions = vec![
         RegionShape {
             region_index: 0.into(),
-            columns: vec![Column::new(0, Any::advice()), Column::new(1, Any::advice())]
+            columns: vec![Column::new(0, Any::Advice), Column::new(1, Any::Advice)]
                 .into_iter()
                 .map(|a| a.into())
                 .collect(),
@@ -239,7 +244,7 @@ fn test_slot_in() {
         },
         RegionShape {
             region_index: 1.into(),
-            columns: vec![Column::new(2, Any::advice())]
+            columns: vec![Column::new(2, Any::Advice)]
                 .into_iter()
                 .map(|a| a.into())
                 .collect(),
@@ -247,7 +252,7 @@ fn test_slot_in() {
         },
         RegionShape {
             region_index: 2.into(),
-            columns: vec![Column::new(2, Any::advice()), Column::new(0, Any::advice())]
+            columns: vec![Column::new(2, Any::Advice), Column::new(0, Any::Advice)]
                 .into_iter()
                 .map(|a| a.into())
                 .collect(),

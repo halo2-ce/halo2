@@ -1,19 +1,15 @@
-use crate::arithmetic::{
-    best_fft, best_multiexp, g_to_lagrange, parallelize, CurveAffine, CurveExt, FieldExt, Group,
-};
+use crate::arithmetic::{best_multiexp, g_to_lagrange, parallelize, FieldExt, Group};
 use crate::helpers::CurveRead;
-use crate::poly::commitment::{Blind, CommitmentScheme, Params, ParamsProver, ParamsVerifier, MSM};
+use crate::poly::commitment::{Blind, CommitmentScheme, Params, ParamsProver, ParamsVerifier};
 use crate::poly::{Coeff, LagrangeCoeff, Polynomial};
 
+use curves::pairing::Engine;
 use ff::{Field, PrimeField};
-use group::{prime::PrimeCurveAffine, Curve, Group as _};
-use halo2curves::pairing::Engine;
+use group::{prime::PrimeCurveAffine, Curve};
 use rand_core::{OsRng, RngCore};
 use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::ops::{Add, AddAssign, Mul, MulAssign};
-
 use std::io;
+use std::marker::PhantomData;
 
 use super::msm::MSMKZG;
 
@@ -54,6 +50,20 @@ impl<E: Engine + Debug> ParamsKZG<E> {
     /// Initializes parameters for the curve, draws toxic secret from given rng.
     /// MUST NOT be used in production.
     pub fn setup<R: RngCore>(k: u32, rng: R) -> Self {
+        let s = <E::Scalar>::random(rng);
+        Self::unsafe_setup_with_s(k, s)
+    }
+
+    /// Initializes parameters for the curve, Draws random toxic point inside of
+    /// the function MUST NOT be used in production
+    pub fn unsafe_setup(k: u32) -> Self {
+        let s = E::Scalar::random(OsRng);
+        Self::unsafe_setup_with_s(k, s)
+    }
+
+    /// Initializes parameters for the curve, using given random `s`
+    /// MUST NOT be used in production
+    pub fn unsafe_setup_with_s(k: u32, s: <E as Engine>::Scalar) -> Self {
         // Largest root of unity exponent of the Engine is `2^E::Scalar::S`, so we can
         // only support FFTs of polynomials below degree `2^E::Scalar::S`.
         assert!(k <= E::Scalar::S);
@@ -61,8 +71,6 @@ impl<E: Engine + Debug> ParamsKZG<E> {
 
         // Calculate g = [G1, [s] G1, [s^2] G1, ..., [s^(n-1)] G1] in parallel.
         let g1 = E::G1Affine::generator();
-        let s = <E::Scalar>::random(rng);
-
         let mut g_projective = vec![E::G1::group_zero(); n as usize];
         parallelize(&mut g_projective, |g, start| {
             let mut current_g: E::G1 = g1.into();
@@ -132,12 +140,18 @@ impl<E: Engine + Debug> ParamsKZG<E> {
     pub fn s_g2(&self) -> E::G2Affine {
         self.s_g2
     }
+
+    /// Returns a reference to g_lagrange bases
+    pub fn g_lagrange_ref(&self) -> &[E::G1Affine] {
+        &self.g_lagrange
+    }
 }
 
 // TODO: see the issue at https://github.com/appliedzkp/halo2/issues/45
-// So we probably need much smaller verifier key. However for new bases in g1 should be in verifier keys.
+// So we probably need much smaller verifier key. However for new bases in g1
+// should be in verifier keys.
 /// KZG multi-open verification parameters
-pub type ParamsVerifierKZG<C> = ParamsKZG<C>;
+pub type ParamsVerifierKZG<E> = ParamsKZG<E>;
 
 impl<'params, E: Engine + Debug> Params<'params, E::G1Affine> for ParamsKZG<E> {
     type MSM = MSMKZG<E>;
@@ -279,24 +293,11 @@ impl<'params, E: Engine + Debug> ParamsProver<'params, E::G1Affine> for ParamsKZ
 #[cfg(test)]
 mod test {
 
-    use crate::arithmetic::{
-        best_fft, best_multiexp, parallelize, CurveAffine, CurveExt, FieldExt, Group,
-    };
-    use crate::helpers::CurveRead;
     use crate::poly::commitment::ParamsProver;
-    use crate::poly::commitment::{Blind, CommitmentScheme, Params, MSM};
-    use crate::poly::kzg::commitment::{ParamsKZG, ParamsVerifierKZG};
-    use crate::poly::kzg::msm::MSMKZG;
-    use crate::poly::kzg::multiopen::ProverSHPLONK;
-    use crate::poly::{Coeff, LagrangeCoeff, Polynomial};
+    use crate::poly::commitment::{Blind, Params};
+    use crate::poly::kzg::commitment::ParamsKZG;
 
-    use ff::{Field, PrimeField};
-    use group::{prime::PrimeCurveAffine, Curve, Group as _};
-    use halo2curves::bn256::G1Affine;
-    use std::marker::PhantomData;
-    use std::ops::{Add, AddAssign, Mul, MulAssign};
-
-    use std::io;
+    use ff::Field;
 
     #[test]
     fn test_commit_lagrange() {
@@ -305,7 +306,7 @@ mod test {
         use rand_core::OsRng;
 
         use crate::poly::EvaluationDomain;
-        use halo2curves::bn256::{Bn256, Fr};
+        use curves::bn256::{Bn256, Fr};
 
         let params = ParamsKZG::<Bn256>::new(K);
         let domain = EvaluationDomain::new(1, K);
@@ -327,13 +328,8 @@ mod test {
     fn test_parameter_serialisation_roundtrip() {
         const K: u32 = 4;
 
-        use ff::Field;
-        use rand_core::OsRng;
-
-        use super::super::commitment::{Blind, Params};
-        use crate::arithmetic::{eval_polynomial, FieldExt};
-        use crate::halo2curves::bn256::{Bn256, Fr};
-        use crate::poly::EvaluationDomain;
+        use super::super::commitment::Params;
+        use crate::curves::bn256::Bn256;
 
         let params0 = ParamsKZG::<Bn256>::new(K);
         let mut data = vec![];

@@ -11,7 +11,6 @@ use crate::{
     arithmetic::{eval_polynomial, parallelize, CurveAffine, FieldExt},
     plonk::{self, Error},
     poly::{
-        self,
         commitment::{Blind, Params},
         Coeff, ExtendedLagrangeCoeff, LagrangeCoeff, Polynomial, ProverQuery, Rotation,
     },
@@ -98,7 +97,7 @@ impl Argument {
             // Iterate over each column of the permutation
             for (&column, permuted_column_values) in columns.iter().zip(permutations.iter()) {
                 let values = match column.column_type() {
-                    Any::Advice(_) => advice,
+                    Any::Advice => advice,
                     Any::Fixed => fixed,
                     Any::Instance => instance,
                 };
@@ -121,7 +120,7 @@ impl Argument {
             for &column in columns.iter() {
                 let omega = domain.get_omega();
                 let values = match column.column_type() {
-                    Any::Advice(_) => advice,
+                    Any::Advice => advice,
                     Any::Fixed => fixed,
                     Any::Instance => instance,
                 };

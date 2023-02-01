@@ -13,13 +13,14 @@ use group::prime::PrimeGroup;
 use crate::{
     circuit::Value,
     plonk::{
-        Advice, Any, Assigned, Assignment, Challenge, Circuit, Column, ConstraintSystem, Error,
-        Fixed, FloorPlanner, Instance, Selector,
+        Advice, Any, Assigned, Assignment, Circuit, Column, ConstraintSystem, Error, Fixed,
+        FloorPlanner, Instance, Selector,
     },
     poly::Rotation,
 };
 
-/// Measures a circuit to determine its costs, and explain what contributes to them.
+/// Measures a circuit to determine its costs, and explain what contributes to
+/// them.
 #[derive(Debug)]
 pub struct CircuitCost<G: PrimeGroup, ConcreteCircuit: Circuit<G::Scalar>> {
     /// Power-of-2 bound on the number of rows in the circuit.
@@ -116,10 +117,6 @@ impl<F: Field> Assignment<F> for Assembly {
         _: Value<Assigned<F>>,
     ) -> Result<(), Error> {
         Ok(())
-    }
-
-    fn get_challenge(&self, _: Challenge) -> Value<F> {
-        Value::unknown()
     }
 
     fn push_namespace<NR, N>(&mut self, _: N)
@@ -243,7 +240,8 @@ impl<G: PrimeGroup, ConcreteCircuit: Circuit<G::Scalar>> CircuitCost<G, Concrete
         }
     }
 
-    /// Returns the proof size for the given number of instances of this circuit.
+    /// Returns the proof size for the given number of instances of this
+    /// circuit.
     pub fn proof_size(&self, instances: usize) -> ProofSize<G> {
         let marginal = self.marginal_proof_size();
 
@@ -329,7 +327,8 @@ impl Mul<usize> for ProofContribution {
     }
 }
 
-/// The marginal size of a Halo 2 proof, broken down into its contributing factors.
+/// The marginal size of a Halo 2 proof, broken down into its contributing
+/// factors.
 #[derive(Debug)]
 pub struct MarginalProofSize<G: PrimeGroup> {
     instance: ProofContribution,

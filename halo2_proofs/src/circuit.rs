@@ -1,14 +1,12 @@
 //! Traits and structs for implementing circuit components.
 
-use std::{convert::TryInto, fmt, marker::PhantomData};
+use std::{fmt, marker::PhantomData};
 
 use ff::Field;
 
 use crate::{
     arithmetic::FieldExt,
-    plonk::{
-        Advice, Any, Assigned, Challenge, Column, Error, Fixed, Instance, Selector, TableColumn,
-    },
+    plonk::{Advice, Any, Assigned, Column, Error, Fixed, Instance, Selector, TableColumn},
 };
 
 mod value;
@@ -28,14 +26,16 @@ pub mod layouter;
 /// using its own implementation of `load`, and stores it in [`Chip::Loaded`].
 /// This can be accessed via [`Chip::loaded`].
 pub trait Chip<F: FieldExt>: Sized {
-    /// A type that holds the configuration for this chip, and any other state it may need
-    /// during circuit synthesis, that can be derived during [`Circuit::configure`].
+    /// A type that holds the configuration for this chip, and any other state
+    /// it may need during circuit synthesis, that can be derived during
+    /// [`Circuit::configure`].
     ///
     /// [`Circuit::configure`]: crate::plonk::Circuit::configure
     type Config: fmt::Debug + Clone;
 
-    /// A type that holds any general chip state that needs to be loaded at the start of
-    /// [`Circuit::synthesize`]. This might simply be `()` for some chips.
+    /// A type that holds any general chip state that needs to be loaded at the
+    /// start of [`Circuit::synthesize`]. This might simply be `()` for some
+    /// chips.
     ///
     /// [`Circuit::synthesize`]: crate::plonk::Circuit::synthesize
     type Loaded: fmt::Debug + Clone;
@@ -51,8 +51,8 @@ pub trait Chip<F: FieldExt>: Sized {
 }
 
 /// Index of a region in a layouter
-#[derive(Clone, Copy, Debug)]
-pub struct RegionIndex(usize);
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct RegionIndex(pub usize);
 
 impl From<usize> for RegionIndex {
     fn from(idx: usize) -> RegionIndex {
@@ -87,14 +87,14 @@ impl std::ops::Deref for RegionStart {
 }
 
 /// A pointer to a cell within a circuit.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Cell {
     /// Identifies the region in which this cell resides.
-    region_index: RegionIndex,
+    pub region_index: RegionIndex,
     /// The relative offset of this cell within its region.
-    row_offset: usize,
+    pub row_offset: usize,
     /// The column of this cell.
-    column: Column<Any>,
+    pub column: Column<Any>,
 }
 
 /// An assigned cell.
@@ -128,8 +128,8 @@ where
 }
 
 impl<F: Field> AssignedCell<Assigned<F>, F> {
-    /// Evaluates this assigned cell's value directly, performing an unbatched inversion
-    /// if necessary.
+    /// Evaluates this assigned cell's value directly, performing an unbatched
+    /// inversion if necessary.
     ///
     /// If the denominator is zero, the returned cell's value is zero.
     pub fn evaluate(self) -> AssignedCell<F, F> {
@@ -170,15 +170,16 @@ where
 
 /// A region of the circuit in which a [`Chip`] can assign cells.
 ///
-/// Inside a region, the chip may freely use relative offsets; the [`Layouter`] will
-/// treat these assignments as a single "region" within the circuit.
+/// Inside a region, the chip may freely use relative offsets; the [`Layouter`]
+/// will treat these assignments as a single "region" within the circuit.
 ///
-/// The [`Layouter`] is allowed to optimise between regions as it sees fit. Chips must use
-/// [`Region::constrain_equal`] to copy in variables assigned in other regions.
+/// The [`Layouter`] is allowed to optimise between regions as it sees fit.
+/// Chips must use [`Region::constrain_equal`] to copy in variables assigned in
+/// other regions.
 ///
-/// TODO: It would be great if we could constrain the columns in these types to be
-/// "logical" columns that are guaranteed to correspond to the chip (and have come from
-/// `Chip::Config`).
+/// TODO: It would be great if we could constrain the columns in these types to
+/// be "logical" columns that are guaranteed to correspond to the chip (and have
+/// come from `Chip::Config`).
 #[derive(Debug)]
 pub struct Region<'r, F: Field> {
     region: &'r mut dyn layouter::RegionLayouter<F>,
@@ -208,7 +209,8 @@ impl<'r, F: Field> Region<'r, F> {
 
     /// Assign an advice column value (witness).
     ///
-    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at most once.
+    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at
+    /// most once.
     pub fn assign_advice<'v, V, VR, A, AR>(
         &'v mut self,
         annotation: A,
@@ -239,10 +241,11 @@ impl<'r, F: Field> Region<'r, F> {
         })
     }
 
-    /// Assigns a constant value to the column `advice` at `offset` within this region.
+    /// Assigns a constant value to the column `advice` at `offset` within this
+    /// region.
     ///
-    /// The constant value will be assigned to a cell within one of the fixed columns
-    /// configured via `ConstraintSystem::enable_constant`.
+    /// The constant value will be assigned to a cell within one of the fixed
+    /// columns configured via `ConstraintSystem::enable_constant`.
     ///
     /// Returns the advice cell.
     pub fn assign_advice_from_constant<VR, A, AR>(
@@ -304,7 +307,8 @@ impl<'r, F: Field> Region<'r, F> {
 
     /// Assign a fixed value.
     ///
-    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at most once.
+    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at
+    /// most once.
     pub fn assign_fixed<'v, V, VR, A, AR>(
         &'v mut self,
         annotation: A,
@@ -337,7 +341,8 @@ impl<'r, F: Field> Region<'r, F> {
 
     /// Constrains a cell to have a constant value.
     ///
-    /// Returns an error if the cell is in a column where equality has not been enabled.
+    /// Returns an error if the cell is in a column where equality has not been
+    /// enabled.
     pub fn constrain_constant<VR>(&mut self, cell: Cell, constant: VR) -> Result<(), Error>
     where
         VR: Into<Assigned<F>>,
@@ -371,7 +376,8 @@ impl<'r, F: Field> Table<'r, F> {
     ///
     /// Returns an error if the table cell has already been assigned to.
     ///
-    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at most once.
+    /// Even though `to` has `FnMut` bounds, it is guaranteed to be called at
+    /// most once.
     pub fn assign_cell<'v, V, VR, A, AR>(
         &'v mut self,
         annotation: A,
@@ -392,21 +398,21 @@ impl<'r, F: Field> Table<'r, F> {
     }
 }
 
-/// A layout strategy within a circuit. The layouter is chip-agnostic and applies its
-/// strategy to the context and config it is given.
+/// A layout strategy within a circuit. The layouter is chip-agnostic and
+/// applies its strategy to the context and config it is given.
 ///
 /// This abstracts over the circuit assignments, handling row indices etc.
-///
 pub trait Layouter<F: Field> {
-    /// Represents the type of the "root" of this layouter, so that nested namespaces
-    /// can minimize indirection.
+    /// Represents the type of the "root" of this layouter, so that nested
+    /// namespaces can minimize indirection.
     type Root: Layouter<F>;
 
     /// Assign a region of gates to an absolute row number.
     ///
-    /// Inside the closure, the chip may freely use relative offsets; the `Layouter` will
-    /// treat these assignments as a single "region" within the circuit. Outside this
-    /// closure, the `Layouter` is allowed to optimise as it sees fit.
+    /// Inside the closure, the chip may freely use relative offsets; the
+    /// `Layouter` will treat these assignments as a single "region" within
+    /// the circuit. Outside this closure, the `Layouter` is allowed to
+    /// optimise as it sees fit.
     ///
     /// ```ignore
     /// fn assign_region(&mut self, || "region name", |region| {
@@ -443,19 +449,16 @@ pub trait Layouter<F: Field> {
         row: usize,
     ) -> Result<(), Error>;
 
-    /// Queries the value of the given challenge.
-    ///
-    /// Returns `Value::unknown()` if the current synthesis phase is before the challenge can be queried.
-    fn get_challenge(&self, challenge: Challenge) -> Value<F>;
-
     /// Gets the "root" of this assignment, bypassing the namespacing.
     ///
-    /// Not intended for downstream consumption; use [`Layouter::namespace`] instead.
+    /// Not intended for downstream consumption; use [`Layouter::namespace`]
+    /// instead.
     fn get_root(&mut self) -> &mut Self::Root;
 
     /// Creates a new (sub)namespace and enters into it.
     ///
-    /// Not intended for downstream consumption; use [`Layouter::namespace`] instead.
+    /// Not intended for downstream consumption; use [`Layouter::namespace`]
+    /// instead.
     fn push_namespace<NR, N>(&mut self, name_fn: N)
     where
         NR: Into<String>,
@@ -463,7 +466,8 @@ pub trait Layouter<F: Field> {
 
     /// Exits out of the existing namespace.
     ///
-    /// Not intended for downstream consumption; use [`Layouter::namespace`] instead.
+    /// Not intended for downstream consumption; use [`Layouter::namespace`]
+    /// instead.
     fn pop_namespace(&mut self, gadget_name: Option<String>);
 
     /// Enters into a namespace.
@@ -478,8 +482,8 @@ pub trait Layouter<F: Field> {
     }
 }
 
-/// This is a "namespaced" layouter which borrows a `Layouter` (pushing a namespace
-/// context) and, when dropped, pops out of the namespace context.
+/// This is a "namespaced" layouter which borrows a `Layouter` (pushing a
+/// namespace context) and, when dropped, pops out of the namespace context.
 #[derive(Debug)]
 pub struct NamespacedLayouter<'a, F: Field, L: Layouter<F> + 'a>(&'a mut L, PhantomData<F>);
 
@@ -511,10 +515,6 @@ impl<'a, F: Field, L: Layouter<F> + 'a> Layouter<F> for NamespacedLayouter<'a, F
         row: usize,
     ) -> Result<(), Error> {
         self.0.constrain_instance(cell, column, row)
-    }
-
-    fn get_challenge(&self, challenge: Challenge) -> Value<F> {
-        self.0.get_challenge(challenge)
     }
 
     fn get_root(&mut self) -> &mut Self::Root {

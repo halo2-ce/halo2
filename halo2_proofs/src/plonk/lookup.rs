@@ -7,9 +7,9 @@ pub(crate) mod verifier;
 
 #[derive(Clone)]
 pub struct Argument<F: Field> {
-    pub(crate) name: &'static str,
-    pub(crate) input_expressions: Vec<Expression<F>>,
-    pub(crate) table_expressions: Vec<Expression<F>>,
+    pub name: &'static str,
+    pub input_expressions: Vec<Expression<F>>,
+    pub table_expressions: Vec<Expression<F>>,
 }
 
 impl<F: Field> Debug for Argument<F> {
@@ -50,7 +50,8 @@ impl<F: Field> Argument<F> {
         // degree (2 + input_degree + table_degree) or 4, whichever is larger:
         // (1 - (l_last(X) + l_blind(X))) * (
         //   z(\omega X) (a'(X) + \beta) (s'(X) + \gamma)
-        //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
+        //   - z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1}
+        //     s_0(X) + ... + s_{m-1}(X) + \gamma)
         // ) = 0
         //
         // The first two values of a' and s' should be the same.
@@ -60,7 +61,8 @@ impl<F: Field> Argument<F> {
         // Either the two values are the same, or the previous
         // value of a' is the same as the current value.
         // degree 3:
-        // (1 - (l_last(X) + l_blind(X))) * (a′(X) − s′(X))⋅(a′(X) − a′(\omega^{-1} X)) = 0
+        // (1 - (l_last(X) + l_blind(X))) * (a′(X) − s′(X))⋅(a′(X) − a′(\omega^{-1} X))
+        // = 0
         let mut input_degree = 1;
         for expr in self.input_expressions.iter() {
             input_degree = std::cmp::max(input_degree, expr.degree());
@@ -77,7 +79,8 @@ impl<F: Field> Argument<F> {
         std::cmp::max(
             // (1 - (l_last + l_blind)) z(\omega X) (a'(X) + \beta) (s'(X) + \gamma)
             4,
-            // (1 - (l_last + l_blind)) z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta) (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
+            // (1 - (l_last + l_blind)) z(X) (\theta^{m-1} a_0(X) + ... + a_{m-1}(X) + \beta)
+            // (\theta^{m-1} s_0(X) + ... + s_{m-1}(X) + \gamma)
             2 + input_degree + table_degree,
         )
     }
